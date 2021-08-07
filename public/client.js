@@ -44,9 +44,6 @@ function rollArtifact(setName) {
         .then(res => res.json())
         .then(result => {
             //console.log(result)
-            const deletebutton = document.getElementById('roll-hidden_palace')
-            deletebutton.innerHTML = "change"
-
             var rarityStr = "";
             var subsStr = `<span id="subs${result['_id']}">`;
 
@@ -120,7 +117,6 @@ window.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify(objBody),
         })
             .then(() => {
-                console.log("AAAAAAAAAAAAAAAAAAA");
                 for(var i = 0; i < artifactIDs.length; i++){
                     var button = document.getElementById('button'+artifactIDs[i]);
                     button.remove();
@@ -136,7 +132,6 @@ window.addEventListener('DOMContentLoaded', () => {
         for(const obj of data){
             artifactID = obj[1];
         }
-        console.log("SUBMITTED");
         var objBody = {id: artifactID};
         fetch('/level', {
             method: 'post',

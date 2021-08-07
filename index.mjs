@@ -39,6 +39,7 @@ const dbName = 'testproj';
 const client = new MongoClient(url);
 
 var artifactsCollection;
+var regularUsersCollection;
 
 MongoClient.connect(url, { useUnifiedTopology:
     true })
@@ -46,10 +47,12 @@ MongoClient.connect(url, { useUnifiedTopology:
     .then(client => {
         console.log("Connected to server");
         const db = client.db(dbName);
+        const usersdb = client.db('usersdb');
         artifactsCollection = db.collection('artifacts');
+        regularUsersCollection = usersdb.collection('regular');
 
         app.post('/artifacts', (req, res) => {
-            console.log(req.body);
+            //console.log(req.body);
             artifactsCollection.insertOne(req.body)
                 .then(() => {
                     res.send(req.body)
@@ -58,20 +61,66 @@ MongoClient.connect(url, { useUnifiedTopology:
                 .catch(error => console.error(error))
         });
 
-        app.get('/', (req, res) => {
+        app.get('/home', (req, res) => {
            artifactsCollection.find().sort({$natural:-1}).toArray()
                 .then(results => {
-                    console.log(results)
+                    //console.log(results)
                     res.render('index', { artifacts: results})
                 })
                 .catch(error => console.log(error))
         });
 
+        app.get('/', (req, res) => {
+            res.redirect('/home');
+        });
+
+        app.get('/register', (req, res) => {
+            res.render('register');
+        });
+
+        app.post('/register', (req, res) => {
+            const obj = req.body;
+            //console.log(obj);
+            regularUsersCollection.findOne(
+                {'username': obj.username}
+            )
+                .then(result => {
+                    if(result != null){
+                        console.log("Username already in use");
+                        res.render('register');
+                    }
+                    else{
+                        regularUsersCollection.insertOne(obj).
+                            then(result => {
+                                res.redirect('/login');
+                            })
+                    }
+                })
+        });
+
+        app.get('/login', (req, res) => {
+            res.render('login');
+        });
+
+        app.post('/login', (req, res) => {
+            const obj = req.body;
+            regularUsersCollection.findOne(
+                {'username': obj.username}
+            )
+                .then(result => {
+                    if(result == null){
+                        console.log("Username not found");
+                        res.redirect('/login');
+                    }
+                    else {
+                        res.redirect('/home');
+                    }
+                })
+        });
 
         app.post('/delete', (req, res) => {
             var removeList = req.body.ids;
-            console.log(removeList);
-            console.log(typeof removeList);
+            //console.log(removeList);
             if(typeof removeList === "string"){
                artifactsCollection.deleteOne({"_id": ObjectId(removeList)})
                    .then(result => {
@@ -91,7 +140,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         app.post('/level', (req, res) => {
-            console.log("HERE");
             var selected = req.body.id;
             if(selected == undefined){
                 res.redirect('/');
@@ -140,7 +188,6 @@ function levelArtifact(obj, selected, res){
             {returnDocument: "after"}
         )
             .then(result =>{
-                console.log(result.value);
                 res.send(result.value);
                 //res.redirect('/');
             });
@@ -168,7 +215,6 @@ function levelArtifact(obj, selected, res){
             {returnDocument: "after"}
         )
             .then(result =>{
-                console.log(result.value);
                 res.send(result.value);
             });
     }
