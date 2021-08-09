@@ -1,13 +1,17 @@
 
 <!DOCTYPE html>
 <html>
+        <script type="module" src="client.js"></script>
     <head>
+        <p>Welcome, <%= username %><p>
+        <form action="/logout" method="post" id="logoutform"></form>
+        <button id="logout">Log Out</button>
+
         <title>Page Title</title>
     </head>
     <body>
         <h1>Genshin Impact Artifact Sim</h1>
         <p>Copium</p>
-        <script type="module" src="client.js"></script>
     </body>
 
 <!--

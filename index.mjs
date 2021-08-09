@@ -1,36 +1,30 @@
-/*var artifactModule = require('./public/client');*/
 import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './public/artifactModule.mjs';
 import express from 'express'
 import bodyParser from 'body-parser';
-//const bodyParser= require('body-parser');
+
 const app = express();
 const port = 3000;
 
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
+
 import mongodb from 'mongodb';
 const {ObjectId} = mongodb;
-//var ObjectId = require('mongodb').ObjectId;
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser('secretstring'));
 
 app.use(express.static('public'));
-/*app.get('/', (req, res) => {*/
-/*res.sendFile(__dirname + '/index.html');*/
-/*});*/
-
 app.listen(port, () => {
       console.log(`Example app listening at http://localhost:${port}`)
 });
 
 const {MongoClient} = mongodb
-//const MongoClient = require('mongodb').MongoClient;
 
 import assert from 'assert';
-//const assert = require('assert');
-
-/*const url = 'mongodb://localhost:27017';*/
 
 const url = 'mongodb+srv://kevin314:kevin3.141592@cluster0.un2qo.mongodb.net/testproj?retryWrites=true&w=majority';
 
@@ -48,7 +42,9 @@ MongoClient.connect(url, { useUnifiedTopology:
         console.log("Connected to server");
         const db = client.db(dbName);
         const usersdb = client.db('usersdb');
-        artifactsCollection = db.collection('artifacts');
+
+        var userid;
+
         regularUsersCollection = usersdb.collection('regular');
 
         app.post('/artifacts', (req, res) => {
@@ -62,12 +58,31 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         app.get('/home', (req, res) => {
-           artifactsCollection.find().sort({$natural:-1}).toArray()
-                .then(results => {
-                    //console.log(results)
-                    res.render('index', { artifacts: results})
-                })
-                .catch(error => console.log(error))
+            const user = req.signedCookies;
+            console.log('Signed cookies:')
+            console.log(user);
+
+            if(user.ck == null){
+                res.redirect('/login');
+            } else {
+                regularUsersCollection.findOne(
+                    {username: user.ck.username}
+                )
+                    .then(result => {
+                        console.log("User is logged in");
+                        console.log(typeof result._id);
+                        console.log(result._id);
+
+                        artifactsCollection = db.collection(JSON.stringify(result._id));
+                        artifactsCollection.find().sort({$natural:-1}).toArray()
+                            .then(results => {
+                                //console.log(results)
+                                res.render('index', { artifacts: results, username: result.username})
+                            })
+                            .catch(error => console.log(error))
+                    });
+            }
+
         });
 
         app.get('/', (req, res) => {
@@ -75,14 +90,24 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         app.get('/register', (req, res) => {
-            res.render('register');
+            const user = req.signedCookies;
+            console.log('Register Signed cookies:')
+            console.log(user);
+
+            if(user.ck != null){
+                res.redirect('/home');
+            } else {
+                res.render('register');
+            }
         });
 
         app.post('/register', (req, res) => {
             const obj = req.body;
+            obj['token'] = '';
             //console.log(obj);
             regularUsersCollection.findOne(
-                {'username': obj.username}
+                {'username': obj.username,
+                }
             )
                 .then(result => {
                     if(result != null){
@@ -92,6 +117,7 @@ MongoClient.connect(url, { useUnifiedTopology:
                     else{
                         regularUsersCollection.insertOne(obj).
                             then(result => {
+                                db.createCollection
                                 res.redirect('/login');
                             })
                     }
@@ -99,7 +125,15 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         app.get('/login', (req, res) => {
-            res.render('login');
+            const user = req.signedCookies;
+            console.log('LOGIN Signed cookies:')
+            console.log(user);
+
+            if(user.ck != null){
+                res.redirect('/home');
+            } else {
+                res.render('login');
+            }
         });
 
         app.post('/login', (req, res) => {
@@ -113,10 +147,39 @@ MongoClient.connect(url, { useUnifiedTopology:
                         res.redirect('/login');
                     }
                     else {
-                        res.redirect('/home');
+                        console.log("login id: " + result._id);
+                        console.log("login user: " + result.username);
+                        const token = jwt.sign({_id: result._id}, 'secretstring', {expiresIn: '50000'},(err, token)=> {
+                                console.log('token: ');
+                                console.log(token);
+                                res.cookie('ck', {token: token, username: result.username}, {signed: true,maxAge: 50000, httpOnly: true});
+                                res.redirect('/home');
+                            });
                     }
                 })
         });
+
+        app.post('/logout', (req, res) => {
+            const user = req.signedCookies;
+            console.log('Register Signed cookies:')
+            console.log(user);
+
+            if(user.ck == null){
+                res.redirect('/login');
+            } else {
+                regularUsersCollection.findOneAndUpdate(
+                    {"username": user.ck.username},
+                    {
+                        $set: {token: ''},
+                    },
+                )
+                    .then(result =>{
+                        res.clearCookie('ck');
+                        res.redirect('/login');
+                    });
+            }
+        });
+
 
         app.post('/delete', (req, res) => {
             var removeList = req.body.ids;
@@ -153,16 +216,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                     levelArtifact(obj, selected, res);
                 })
         })
-
-
-            /*.then(result => {*/
-            /*res.redirect('/');*/
-            /*console.log(result);*/
-            /*})*/
-            /*.catch(error => console.error(error))*/
-            /*if(typeof removeList === "string"){*/
-            /*artifactsCollection.delete*/
-    //client.close();
     });
 
 function levelArtifact(obj, selected, res){

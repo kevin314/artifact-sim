@@ -100,6 +100,16 @@ function levelUpdatePage(obj){
 
 
 window.addEventListener('DOMContentLoaded', () => {
+    const logoutbutton = document.getElementById('logout');
+    logoutbutton.addEventListener('click', ()=> {
+        fetch('/logout', {
+            method: 'post',
+        })
+            .then(result => {
+                window.location.href = "/login";
+            })
+    });
+
     const deleteform = document.getElementById('deleteform');
     deleteform.addEventListener('submit', event => {
         event.preventDefault();
