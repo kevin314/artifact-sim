@@ -106,7 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
             method: 'post',
         })
             .then(result => {
-                window.location.href = "/login";
+                window.location.href = "/auth/google";
             })
     });
 
@@ -138,6 +138,7 @@ window.addEventListener('DOMContentLoaded', () => {
     levelform.addEventListener('submit', event => {
         event.preventDefault();
         var data = new FormData(levelform);
+        console.log(data);
         var artifactID;
         for(const obj of data){
             artifactID = obj[1];
@@ -150,7 +151,7 @@ window.addEventListener('DOMContentLoaded', () => {
         })
             .then(res => res.json())
             .then(result => {
-                console.log(result);
+                console.log('yo:' + result);
                 levelUpdatePage(result);
             })
     });

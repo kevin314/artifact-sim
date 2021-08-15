@@ -8,6 +8,19 @@ const port = 3000;
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 
+import cookieSession from 'cookie-session';
+import './passport.mjs';
+
+import passport from 'passport';
+
+app.use(cookieSession({
+    name: 'genshin-session',
+    keys: ['key1, key2']
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 import mongodb from 'mongodb';
 const {ObjectId} = mongodb;
 
@@ -47,8 +60,21 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         regularUsersCollection = usersdb.collection('regular');
 
+        setInterval(()=> {
+            regularUsersCollection.updateMany(
+                {'resin': {$lt: 160}},
+                {$inc: {'resin': 1}}
+            )
+        }, 3000)
+
         app.post('/artifacts', (req, res) => {
             //console.log(req.body);
+
+            const email = req.user.emails[0].value;
+            regularUsersCollection.updateOne(
+                {'email': email},
+                {$inc: {'resin': -2}}
+            )
             artifactsCollection.insertOne(req.body)
                 .then(() => {
                     res.send(req.body)
@@ -57,6 +83,61 @@ MongoClient.connect(url, { useUnifiedTopology:
                 .catch(error => console.error(error))
         });
 
+
+        app.get('/', (req, res) => {
+            res.redirect('/home');
+        });
+
+        app.get('/failed', (req, res) => {
+            res.send('<h1>Log in Failed :(</h1>')
+        });
+
+        const checkUserLoggedIn = (req, res, next) => {
+            req.user ? next(): res.redirect('/auth/google');
+        }
+
+        app.get('/home', checkUserLoggedIn, (req, res) => {
+            const email = req.user.emails[0].value;
+            //console.log(email);
+            artifactsCollection = db.collection(email);
+
+            var resin;
+            regularUsersCollection.findOne({'email': email})
+                .then(result => {
+                    if(result == null) {
+                        regularUsersCollection.insertOne(
+                            {
+                                'email': email,
+                                'resin': 160
+                            }
+                        )
+                        resin = 160;
+                    } else {
+                        resin = result.resin;
+                    }
+                    artifactsCollection.find().sort({$natural:-1}).toArray()
+                        .then(results => {
+                            res.render('index', { artifacts: results, username: req.user.displayName, resin: resin})
+                        })
+                        .catch(error => console.log(error))
+                });
+
+        });
+
+        app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+        app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/failed' }),
+            function(req, res) {
+                res.redirect('/home');
+            }
+        );
+
+        app.post('/logout', (req, res) => {
+            req.session = null;
+            req.logout();
+            res.redirect('');
+        })
+        /*
         app.get('/home', (req, res) => {
             const user = req.signedCookies;
             console.log('Signed cookies:')
@@ -179,6 +260,7 @@ MongoClient.connect(url, { useUnifiedTopology:
                     });
             }
         });
+        */
 
 
         app.post('/delete', (req, res) => {
@@ -208,11 +290,14 @@ MongoClient.connect(url, { useUnifiedTopology:
                 res.redirect('/');
                 return;
             }
-            //console.log(selected);
 
             var selectedDoc = artifactsCollection.findOne({"_id": ObjectId(selected)})
                 .then(obj => {
                     //console.log(obj);
+                    console.log(obj['level']);
+                    if(obj['level'] >= 20) {
+                        return;
+                    }
                     levelArtifact(obj, selected, res);
                 })
         })
