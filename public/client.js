@@ -5,41 +5,11 @@ console.log("hi");
 
 
 function rollArtifact(setName) {
-    var pickedSet = artifacts[setName];
-
-    var setArray = Object.keys(pickedSet);
-    var setIdx = getRandInt(setArray.length);
-
-    var randKey = setArray[setIdx];
-
-    var mainstat = weightedRand(main_percentages[randKey], []);
-    var initialMainVal = main_percentages[randKey][mainstat]['stats']['five']['0'];
-
-    var initialArtifact = {
-        name: pickedSet[randKey],
-        set: setName,
-        slot: randKey,
-        rarity: 5,
-        level: 0,
-        main: mainstat,
-        mainVal: initialMainVal,
-    }
-
-    console.log(JSON.stringify(initialArtifact));
-
-    var numSubs = parseInt(weightedRand({'3': {chance: 0.75}, '4': {chance: 0.25}}, []));
-    var subStats = [];
-    for(var i = 1; i <= numSubs; i++){
-        subStats[i-1] = weightedRand(sub_percentages, [mainstat].concat(subStats));
-        var statRoll = sub_percentages[subStats[i-1]]['stats']['five'][Math.floor(Math.random()*4)];
-        initialArtifact['sub'+ i] = subStats[i-1];
-        initialArtifact['sub'+ i + 'Val'] = statRoll;
-    }
-
+    const request = {set: setName}
     fetch('/artifacts', {
         method: 'post',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initialArtifact),
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(request),
     })
         .then(res => res.json())
         .then(result => {
@@ -75,6 +45,8 @@ function rollArtifact(setName) {
 
             const levelbutton = document.getElementById('levelform')
             levelbutton.insertAdjacentHTML('afterend', str)
+            const resin = document.getElementById('resincount');
+            resin.innerHTML = resin.innerHTML - 5
             //location.reload();
             //window.location.href = "/";
         })
@@ -82,7 +54,7 @@ function rollArtifact(setName) {
 
 function levelUpdatePage(obj){
     const id = obj['_id'];
-    console.log(id);
+    //console.log(id);
     const level = document.getElementById('level'+id);
     const main = document.getElementById('main'+id);
     const subs = document.getElementById('subs'+id);
@@ -118,7 +90,6 @@ window.addEventListener('DOMContentLoaded', () => {
         for(const obj of data){
             artifactIDs.push(obj[1]);
         }
-        console.log(artifactIDs);
         var objBody = {ids: artifactIDs};
 
         fetch('/delete', {
@@ -138,7 +109,7 @@ window.addEventListener('DOMContentLoaded', () => {
     levelform.addEventListener('submit', event => {
         event.preventDefault();
         var data = new FormData(levelform);
-        console.log(data);
+        //console.log(data);
         var artifactID;
         for(const obj of data){
             artifactID = obj[1];
@@ -151,7 +122,7 @@ window.addEventListener('DOMContentLoaded', () => {
         })
             .then(res => res.json())
             .then(result => {
-                console.log('yo:' + result);
+                //console.log(result);
                 levelUpdatePage(result);
             })
     });
