@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
 import './passport.mjs';
 
+import session from 'express-session';
 import passport from 'passport';
 
 app.use(cookieSession({
@@ -41,21 +42,34 @@ import assert from 'assert';
 
 const url = 'mongodb+srv://kevin314:kevin3.141592@cluster0.un2qo.mongodb.net/testproj?retryWrites=true&w=majority';
 
-const dbName = 'testproj';
-
 const client = new MongoClient(url);
+
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: false
+}));
+
+const databases = {};
+var discorddb, googledb, usersdb;
+var regularUsersCollection, discordUsers, googleUsers;
 
 MongoClient.connect(url, { useUnifiedTopology:
     true })
 /*assert.equal(null, err);})*/
     .then(client => {
-        console.log("Connected to server");
-        const db = client.db(dbName);
-        const usersdb = client.db('usersdb');
+        console.log("Connected to Mongo server");
+        discorddb = client.db('discord');
+        googledb = client.db('google');
+        usersdb = client.db('usersdb');
+        databases['discord'] = discorddb;
+        databases['google'] = googledb;
 
         var userid;
 
-        const regularUsersCollection = usersdb.collection('regular');
+        regularUsersCollection = usersdb.collection('regular');
+        discordUsers = usersdb.collection('discord');
+        googleUsers = usersdb.collection('google');
 
         setInterval(()=> {
             regularUsersCollection.updateMany(
@@ -65,32 +79,39 @@ MongoClient.connect(url, { useUnifiedTopology:
         }, 480000)
 
         app.post('/artifacts', (req, res) => {
-            const email = req.user.emails[0].value;
-            const artifactsCollection = db.collection(email);
-
-            const user = regularUsersCollection.findOne({email: email})
-                .then(result =>{
-                    if(result['resin'] < 5) {
-                        return;
-                    } else {
-                        regularUsersCollection.updateOne(
-                            {'email': email},
-                            {$inc: {'resin': -5}}
-                        )
-                        rollArtifact(res, req.body.set,artifactsCollection);
-                    }
-                })
+            rollAuth(req.user, res, req);
         });
 
-
-        app.get('/', (req, res) => {
-            res.redirect('/home');
+        /*
+        app.get('/home', (req, res) => {
+            console.log(req);
+            res.send("yo");
         });
+        */
 
         app.get('/failed', (req, res) => {
-            res.send('<h1>Log in Failed :(</h1>')
+            res.send('<h1>Log in Failed :</h1>')
         });
 
+        app.get('/', (req, res) => {
+            if(req.user) {
+                //console.log(req.user);
+                authUser(req.user, res);
+            } else {
+                res.render('login');
+            }
+        })
+        const checkUserLoggedIn = (req, res, next) => {
+            req.user ? next(): res.redirect('/auth/google');
+        }
+
+        /*
+        app.get('/auth/discord', (req, res) => {
+            res.redirect('https://discord.com/api/oauth2/authorize?client_id=877069301578870814&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fhome&response_type=token&scope=identify');
+        })
+        */
+
+        /*
         const checkUserLoggedIn = (req, res, next) => {
             req.user ? next(): res.redirect('/auth/google');
         }
@@ -121,12 +142,20 @@ MongoClient.connect(url, { useUnifiedTopology:
                 });
 
         });
-
+        */
         app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-        app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/failed' }),
+        app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
             function(req, res) {
-                res.redirect('/home');
+                res.redirect('/');
+            }
+        );
+
+        app.get('/auth/discord', passport.authenticate('discord'));
+
+        app.get('/auth/discord/callback', passport.authenticate('discord', {failureRedirect: '/'}),
+            function(req, res) {
+                res.redirect('/');
             }
         );
 
@@ -263,8 +292,9 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         app.post('/delete', (req, res) => {
             var removeList = req.body.ids;
-            const email = req.user.emails[0].value;
-            const artifactsCollection = db.collection(email);
+            const idArr = checkAuth(req.user);
+            const artifactsdb = client.db(req.user.provider);
+            const artifactsCollection = artifactsdb.collection(idArr[1]);
             //console.log(removeList);
             if(typeof removeList === "string"){
                artifactsCollection.deleteOne({"_id": ObjectId(removeList)})
@@ -286,8 +316,9 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         app.post('/level', (req, res) => {
             var selected = req.body.id;
-            const email = req.user.emails[0].value;
-            const artifactsCollection = db.collection(email);
+            const idArr = checkAuth(req.user);
+            const artifactsdb = client.db(req.user.provider);
+            const artifactsCollection = artifactsdb.collection(idArr[1]);
             if(selected == undefined){
                 res.redirect('/');
                 return;
@@ -305,6 +336,84 @@ MongoClient.connect(url, { useUnifiedTopology:
         })
     });
 
+function checkAuth(user) {
+    if (user.provider == 'discord') {
+        return [{'username': user.username, 'discriminator': user.discriminator}, user.username+'#'+user.discriminator];
+    } else if (user.provider == 'google') {
+        return [{'email': user.emails[0].value}, user.emails[0].value];
+    }
+}
+
+function rollAuth(user, res, req) {
+    const idArr = checkAuth(user);
+    const artifactsdb = databases[user.provider];
+    const userCollection = usersdb.collection(user.provider);
+
+    const artifactsCollection = artifactsdb.collection(idArr[1]);
+
+    userCollection.findOne(idArr[0])
+        .then(result =>{
+            if(result['resin'] < 5) {
+                return;
+            } else {
+                userCollection.updateOne(
+                    idArr[0],
+                    {$inc: {'resin': -5}}
+                )
+                rollArtifact(res, req.body.set, artifactsCollection);
+            }
+        })
+}
+
+function authUser(user, res) {
+    if(user.provider == 'discord') {
+        const id = user.username +'#'+ user.discriminator;
+        const artifactsCollection = discorddb.collection(id);
+        var resin;
+        discordUsers.findOne({'username': user.username, 'discriminator': user.discriminator})
+            .then(result => {
+                if(result == null) {
+                    discordUsers.insertOne(
+                        {
+                            'username': user.username,
+                            'discriminator': user.discriminator,
+                            'resin': 160
+                        }
+                    )
+                } else {
+                    resin = result.resin;
+                }
+                artifactsCollection.find().sort({$natural:-1}).toArray()
+                    .then(results => {
+                        res.render('index', { artifacts: results, username: user.username, resin: resin})
+                    })
+                    .catch(error => console.log(error))
+            });
+    }
+    else if (user.provider == 'google') {
+        const email = user.emails[0].value;
+        const artifactsCollection = googledb.collection(email);
+        var resin;
+        googleUsers.findOne({'email': email})
+            .then(result => {
+                if(result == null) {
+                    googleUsers.insertOne(
+                        {
+                            'email': email,
+                            'resin': 160
+                        }
+                    )
+                } else {
+                    resin = result.resin;
+                }
+                artifactsCollection.find().sort({$natural:-1}).toArray()
+                    .then(results => {
+                        res.render('index', { artifacts: results, username: user.name.givenName, resin: resin})
+                    })
+                    .catch(error => console.log(error))
+            });
+    }
+}
 function listArtifacts(artifactsCollection){
     artifactsCollection.find().sort({$natural:-1}).toArray()
         .then(results => {

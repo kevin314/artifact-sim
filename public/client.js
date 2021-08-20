@@ -78,7 +78,7 @@ window.addEventListener('DOMContentLoaded', () => {
             method: 'post',
         })
             .then(result => {
-                window.location.href = "/auth/google";
+                window.location.href = "/";
             })
     });
 
