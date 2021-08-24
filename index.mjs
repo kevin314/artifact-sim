@@ -1,8 +1,13 @@
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './public/artifactModule.mjs';
 import express from 'express'
 import bodyParser from 'body-parser';
 
 const app = express();
+const router = express.Router();
 const port = 3000;
 
 import jwt from 'jsonwebtoken';
@@ -26,15 +31,31 @@ import mongodb from 'mongodb';
 const {ObjectId} = mongodb;
 
 app.set('view engine', 'ejs');
+app.set('views', __dirname + '/views');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser('secretstring'));
 
 app.use(express.static('public'));
+
+//import subdomain from 'express-subdomain'
+/*
+router.get('/', (req, res) => {
+    res.send('subdomain!');
+});
+*/
+//app.use(subdomain('subdomain', router));
+
+//import vhost from 'vhost'
+//import {genshinApp} from './subdomains/genshin/index.mjs';
+//app.use(vhost('subdomain.wewe1234.com', genshinApp))
+
+/*
 app.listen(port, () => {
       console.log(`Example app listening at http://localhost:${port}`)
 });
+*/
 
 const {MongoClient} = mongodb
 
@@ -93,7 +114,15 @@ MongoClient.connect(url, { useUnifiedTopology:
             res.send('<h1>Log in Failed :</h1>')
         });
 
+
+        app.get('/test', (req, res) => {
+                res.send('yo');
+        })
         app.get('/', (req, res) => {
+            /*
+            res.send('main dom')
+            res.end();
+            */
             if(req.user) {
                 //console.log(req.user);
                 authUser(req.user, res);
@@ -532,3 +561,4 @@ function levelArtifact(obj, selected, res, artifactsCollection){
     }
 }
 
+export {app as genshinApp};
