@@ -4,9 +4,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './public/artifactModule.mjs';
 import express from 'express'
+import favicon from 'serve-favicon';
 import bodyParser from 'body-parser';
 
 const app = express();
+app.use(favicon(__dirname + '/public/favicon2.ico'))
+/*
+app.get('/favicon.ico', (req, res) => {
+    console.log('fav');
+    res.sendFile(__dirname + '/public/favicon.ico');
+})
+app.get('/oom', (req, res) => {
+    console.log('oom');
+})
+*/
 const router = express.Router();
 const port = 3000;
 
@@ -19,10 +30,12 @@ import './passport.mjs';
 import session from 'express-session';
 import passport from 'passport';
 
+/*
 app.use(cookieSession({
     name: 'genshin-session',
     keys: ['key1, key2']
 }));
+*/
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -107,13 +120,6 @@ MongoClient.connect(url, { useUnifiedTopology:
             rollAuth(req.user, res, req);
         });
 
-        /*
-        app.get('/home', (req, res) => {
-            console.log(req);
-            res.send("yo");
-        });
-        */
-
         app.get('/failed', (req, res) => {
             res.send('<h1>Log in Failed :</h1>')
         });
@@ -123,10 +129,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                 res.send('yo');
         })
         app.get('/', (req, res) => {
-            /*
-            res.send('main dom')
-            res.end();
-            */
             if(req.user) {
                 //console.log(req.user);
                 authUser(req.user, res);
