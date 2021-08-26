@@ -37,7 +37,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser('secretstring'));
 
-app.use(express.static('public'));
+app.use(express.static(__dirname + '/public'));
 
 //import subdomain from 'express-subdomain'
 /*
@@ -93,10 +93,12 @@ MongoClient.connect(url, { useUnifiedTopology:
         googleUsers = usersdb.collection('google');
 
         setInterval(()=> {
-            regularUsersCollection.updateMany(
-                {'resin': {$lt: 160}},
-                {$inc: {'resin': 1}}
-            )
+            usersdb.getCollectionNames().forEach((colName) => {
+                usersdb.colName.updateMany(
+                    {'resin': {$lt: 160}},
+                    {$inc: {'resin': 1}}
+                )
+            });
         }, 480000)
 
         app.post('/artifacts', (req, res) => {
