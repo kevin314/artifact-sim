@@ -93,13 +93,15 @@ MongoClient.connect(url, { useUnifiedTopology:
         googleUsers = usersdb.collection('google');
 
         setInterval(()=> {
-            usersdb.getCollectionNames().forEach((colName) => {
-                usersdb.colName.updateMany(
-                    {'resin': {$lt: 160}},
-                    {$inc: {'resin': 1}}
-                )
-            });
-        }, 480000)
+            discordUsers.updateMany(
+                {'resin': {$lt: 160}},
+                {$inc: {'resin': 1}}
+            )
+            googleUsers.updateMany(
+                {'resin': {$lt: 160}},
+                {$inc: {'resin': 1}}
+            )
+        }, 300000)
 
         app.post('/artifacts', (req, res) => {
             rollAuth(req.user, res, req);
