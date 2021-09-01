@@ -1,34 +1,38 @@
 const artifacts = {
-    crimson_witch: {
-        flower: "Witch's Flower of Blaze",
-        plume: "Witch's Ever-Burning Plume",
-        sands: "Witch's End Time",
-        goblet: "Witch's Heart Flames",
-        circlet: "Witch's Scorching Hat",
+    hidden_palace: {
+        crimson_witch: {
+            flower: "Witch's Flower of Blaze",
+            plume: "Witch's Ever-Burning Plume",
+            sands: "Witch's End Time",
+            goblet: "Witch's Heart Flames",
+            circlet: "Witch's Scorching Hat",
+        },
+
+        lavawalker: {
+            flower: "Lavawalker's Resolution",
+            plume: "Lavawalker's Salvation",
+            sands: "Lavawalker's Torment",
+            goblet: "Lavawalker's Epiphany",
+            circlet: "Lavawalker's Wisdom",
+        },
     },
 
-    lavawalker: {
-        flower: "Lavawalker's Resolution",
-        plume: "Lavawalker's Salvation",
-        sands: "Lavawalker's Torment",
-        goblet: "Lavawalker's Epiphany",
-        circlet: "Lavawalker's Wisdom",
-    },
+    vindagnyr: {
+        icebreaker: {
+            flower: "Snowswept Memory",
+            plume: "Icebreaker's Resolve",
+            sands: "Frozen Homeland's Demise",
+            goblet: "Frost-Weaved Dignity",
+            circlet: "Broken Rime's Echo",
+        },
 
-    icebreaker: {
-        flower: "Snowswept Memory",
-        plume: "Icebreaker's Resolve",
-        sands: "Frozen Homeland's Demise",
-        goblet: "Frost-Weaved Dignity",
-        circlet: "Broken Rime's Echo",
-    },
-
-    heart_of_depth: {
-        flower: "Gilded Corsage",
-        plume: "Gust of Nostalgia",
-        sands: "Copper Compass",
-        goblet: "Goblet of Thundering Deep",
-        circlet: "Wine-Stained Tricorne",
+        heart_of_depth: {
+            flower: "Gilded Corsage",
+            plume: "Gust of Nostalgia",
+            sands: "Copper Compass",
+            goblet: "Goblet of Thundering Deep",
+            circlet: "Wine-Stained Tricorne",
+        },
     },
 }
 
@@ -315,4 +319,165 @@ function weightedRand(spec, skipArr) {
         }
     }
 }
-export{artifacts, main_percentages, sub_percentages, getRandInt, weightedRand}
+function listArtifacts(res, artifactsCollection){
+    artifactsCollection.find().sort({$natural:-1}).toArray()
+        .then(results => {
+            res.send(results)
+        })
+        .catch(error => console.log(error))
+}
+function rollArtifact(res, domainName, artifactsCollection, userCollection, userQuery) {
+    userCollection.findOne(userQuery)
+        .then(result =>{
+            if(result['resin'] < 5) {
+                res.send("Insufficient resin");
+                return;
+            } else {
+                userCollection.updateOne(
+                    userQuery,
+                    {$inc: {'resin': -5}}
+                )
+
+                var pickedDomain = artifacts[domainName];
+                var keys = Object.keys(pickedDomain);
+                var setName = keys[keys.length*Math.random() << 0];
+                var pickedSet = pickedDomain[setName];
+
+                var setArray = Object.keys(pickedSet);
+                var setIdx = getRandInt(setArray.length);
+
+                var randKey = setArray[setIdx];
+
+                var mainstat = weightedRand(main_percentages[randKey], []);
+                var initialMainVal = main_percentages[randKey][mainstat]['stats']['five']['0'];
+
+                var initialArtifact = {
+                    name: pickedSet[randKey],
+                    set: setName,
+                    slot: randKey,
+                    rarity: 5,
+                    level: 0,
+                    main: mainstat,
+                    mainVal: initialMainVal,
+                }
+
+                //console.log(JSON.stringify(initialArtifact));
+
+                var numSubs = parseInt(weightedRand({'3': {chance: 0.75}, '4': {chance: 0.25}}, []));
+                var subStats = [];
+                for(var i = 1; i <= numSubs; i++){
+                    subStats[i-1] = weightedRand(sub_percentages, [mainstat].concat(subStats));
+                    var statRoll = sub_percentages[subStats[i-1]]['stats']['five'][Math.floor(Math.random()*4)];
+                    initialArtifact['sub'+ i] = subStats[i-1];
+                    initialArtifact['sub'+ i + 'Val'] = statRoll;
+                }
+
+                artifactsCollection.insertOne(initialArtifact)
+                    .then(() => {
+                        res.send(initialArtifact)
+                        //res.end();
+                    })
+                    .catch(error => console.error(error))
+            }
+        })
+}
+
+function levelArtifact(res, artifactsCollection, artifactID){
+    var selectedDoc = artifactsCollection.findOne({"_id": artifactID})
+        .then(obj => {
+            //console.log(obj);
+            //console.log(obj['level']);
+            if(obj['level'] >= 20) {
+                return;
+            } else {
+                var updateJson = {};
+                var numSubs = (Object.keys(obj).length - 8) / 2;
+
+                var mainPercentages = main_percentages[obj['slot']][obj['main']]['stats']['five'];
+                var mainKeys = Object.keys(mainPercentages);
+                var mainInc = (mainPercentages[mainKeys[1]] - mainPercentages[mainKeys[0]])/ mainKeys[1];
+
+                if((obj['level'] + 1) % 4 == 0){
+                    if(numSubs === 4){
+                        var randNum = getRandInt(4) + 1;
+                        updateJson['sub'+randNum+'Val'] = sub_percentages[obj['sub'+randNum]]['stats']['five'][Math.floor(Math.random()*4)];
+
+                        var valProp = 'sub'+randNum+'Val';
+                        artifactsCollection.findOneAndUpdate(
+                            {"_id": artifactID},
+                            { $inc: {
+                                'level': 1,
+                                'mainVal': mainInc,
+                                [valProp]: updateJson['sub'+randNum+'Val']
+                            }},
+                            {returnDocument: "after"}
+                        )
+                            .then(result =>{
+                                res.send(result.value);
+                                //res.redirect('/');
+                            });
+
+                    } else {
+                        var subStats = [];
+                        for(var i = 0; i < numSubs; i++){
+                            subStats[i] = obj['sub'+(i+1)];
+                        }
+                        var subStat = weightedRand(sub_percentages, [obj['main']].concat(subStats));
+                        var statRoll = sub_percentages[subStat]['stats']['five'][Math.floor(Math.random()*4)];
+                        updateJson['sub'+(numSubs+1)] = subStat;
+                        updateJson['sub'+(numSubs+1)+'Val'] = statRoll;
+
+                        var statProp = 'sub'+(numSubs+1);
+                        var valProp = 'sub'+(numSubs+1)+'Val';
+
+                        artifactsCollection.findOneAndUpdate(
+                            {"_id": artifactID},
+                            {
+                                $inc: {'level': 1,
+                                    'mainVal': mainInc},
+                                $set: {[statProp]: subStat, [valProp]: statRoll},
+                            },
+                            {returnDocument: "after"}
+                        )
+                            .then(result =>{
+                                res.send(result.value);
+                            });
+                    }
+                } else {
+                    artifactsCollection.findOneAndUpdate(
+                        {"_id": artifactID},
+                        { $inc: {
+                            'level': 1,
+                            'mainVal': mainInc,
+                        }},
+                        {returnDocument: "after"}
+                    )
+                        .then(result =>{
+                            res.send(result.value);
+                            //res.redirect('/');
+                        });
+                }
+            }
+        })
+}
+
+function deleteArtifact(res, removeList, artifactsCollection, ObjectId) {
+    if(typeof removeList === "string"){
+        artifactsCollection.deleteOne({"_id": ObjectId(removeList)})
+            .then(result => {
+            })
+            .catch(error => console.error(error))
+    } else if (typeof removeList === "object"){
+        for(var i = 0; i < removeList.length; i++){
+            artifactsCollection.deleteOne({"_id": ObjectId(removeList[i])})
+                .then(result => {
+                    res.send();
+                })
+                .catch(error => console.error(error))
+        }
+    } else {
+        res.redirect('/');
+    }
+}
+
+export{artifacts, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifact, levelArtifact, deleteArtifact}
