@@ -4,8 +4,8 @@ import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand} 
 console.log("hi");
 
 
-function rollArtifact(setName) {
-    const request = {set: setName}
+function rollArtifact(domainName) {
+    const request = {domain: domainName}
     fetch('/artifacts', {
         method: 'post',
         headers: {'Content-Type': 'application/json'},
@@ -129,28 +129,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const hidden_palace = document.getElementById('roll-hidden_palace')
     hidden_palace.addEventListener('click', () => {
-        var randNum = getRandInt(2);
-        var setName = "";
-        if(randNum == 0){
-            setName = 'crimson_witch'
-        }
-        else{
-            setName = 'lavawalker';
-        }
-
-        rollArtifact(setName);
+        rollArtifact('hidden_palace');
     })
     const vindagnyr  = document.getElementById('roll-vindagnyr')
     vindagnyr.addEventListener('click', () => {
-        var randNum = getRandInt(2);
-        var setName = "";
-        if(randNum == 0){
-            setName = 'icebreaker'
-        }
-        else{
-            setName = 'heart_of_depth';
-        }
-
-        rollArtifact(setName);
+        rollArtifact('vindagnyr');
     })
 })
