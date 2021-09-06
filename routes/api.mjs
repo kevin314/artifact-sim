@@ -8,8 +8,10 @@ const {MongoClient, ObjectId} = mongodb;
 
 const router = express.Router();
 
+/*
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
+*/
 
 
 //const client = await getClient();
@@ -33,7 +35,17 @@ MongoClient.connect(url, { useUnifiedTopology:
             const strArr = req.params['username'].split(':');
             const username = strArr[0];
             const disc = strArr[1];
-            listArtifacts(res, discorddb.collection(username+'#'+disc));
+
+            if (username == '@me'){
+                if (req.user) {
+                    const user = req.user;
+                    listArtifacts(res, discorddb.collection(user['username']+'#'+user['discriminator']));
+                } else {
+                    res.send("Unauthorized");
+                }
+            } else {
+                listArtifacts(res, discorddb.collection(username+'#'+disc));
+            }
             //res.send('get artifacts');
         })
 
