@@ -8,42 +8,38 @@ import express from 'express'
 import favicon from 'serve-favicon';
 import bodyParser from 'body-parser';
 
-const app = express();
-app.use(favicon(__dirname + '/public/favicon.ico'))
-
-app.use('/api/discord', discordAPI);
-
-const router = express.Router();
-const port = 3000;
-
 import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 
-import cookieSession from 'cookie-session';
+import cookieSession from 'express-session';
 import './passport.mjs';
 
 import session from 'express-session';
 import passport from 'passport';
 
+import mongodb from 'mongodb';
+const {ObjectId} = mongodb;
+const {MongoClient} = mongodb;
+import assert from 'assert';
 
+
+const router = express.Router();
+const port = 3000;
+
+const app = express();
+
+/*
 app.use(cookieSession({
     name: 'genshin-session',
     keys: ['key1, key2']
 }));
-
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-import mongodb from 'mongodb';
-const {ObjectId} = mongodb;
-
+*/
+app.use(favicon(__dirname + '/public/favicon.ico'))
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cookieParser('secretstring'));
 
 app.use(express.static(__dirname + '/public'));
 
@@ -58,25 +54,24 @@ router.get('/', (req, res) => {
 //import vhost from 'vhost'
 //import {genshinApp} from './subdomains/genshin/index.mjs';
 //app.use(vhost('subdomain.example.com', genshinApp))
-
-const {MongoClient} = mongodb
-
-import assert from 'assert';
-
-const url = 'mongodb+srv://kevin314:kevin3.141592@cluster0.un2qo.mongodb.net/testproj?retryWrites=true&w=majority';
-
 //const client = new MongoClient(url);
 
 app.use(session({
     secret: 'secret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
 }));
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/api/discord', discordAPI);
 
 const databases = {};
 var discorddb, googledb, usersdb;
 var regularUsersCollection, discordUsers, googleUsers;
 
+const url = 'mongodb+srv://kevin314:kevin3.141592@cluster0.un2qo.mongodb.net/testproj?retryWrites=true&w=majority';
 MongoClient.connect(url, { useUnifiedTopology:
     true })
 /*assert.equal(null, err);})*/
@@ -118,6 +113,7 @@ MongoClient.connect(url, { useUnifiedTopology:
                 res.send('yo');
         })
         app.get('/', (req, res) => {
+            //console.log(req.session);
             if(req.user) {
                 //console.log(req.user);
                 authUser(req.user, res);
@@ -125,9 +121,12 @@ MongoClient.connect(url, { useUnifiedTopology:
                 res.render('login');
             }
         })
+
+        /*
         const checkUserLoggedIn = (req, res, next) => {
             req.user ? next(): res.redirect('/auth/google');
         }
+        */
 
         app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -146,9 +145,11 @@ MongoClient.connect(url, { useUnifiedTopology:
         );
 
         app.post('/logout', (req, res) => {
-            req.session = null;
-            req.logout();
-            res.redirect('');
+            //req.logout();
+            //req.session = null;
+            req.session.destroy(() => {
+                res.redirect('/');
+            })
         })
 
         app.post('/delete', (req, res) => {
