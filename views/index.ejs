@@ -4,7 +4,15 @@
         <script type="module" src="client.js"></script>
     <head>
         <p>Welcome, <%= username %><p>
-        <button id="logout">Log Out</button>
+        <% if(loggedIn === true) { %>
+            <button id="logout">Log Out</button>
+        <% } else {  %>
+            <form action="/auth/discord" method="get" id="authdiscord"></form>
+            <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
+            <form action="/auth/google" method="get" id="authgoogle"></form>
+            <button type="submit" form="authgoogle" id="googlebutton">Sign in with
+                Google</button>
+        <% } %>
 
         <title>Page Title</title>
     </head>
@@ -32,6 +40,10 @@
 
 
     <h2> Artifacts </h2>
+    <span hidden id ="resindate"><%=resinDate%></span>
+    <span>Time to next resin: </span>
+    <span id ="resintimer"></span><br/>
+
     <span>Resin: </span>
     <span id ="resincount"><%= resin %></span><br/>
     <script language="JavaScript">
@@ -70,15 +82,15 @@
                 <span><label for= "radio<%=i%>" <span><%= artifacts[i].name
                              %></span><br/>
                          <span id = "level<%= artifacts[i]._id %>">+<%= artifacts[i].level %> <%= artifacts[i].slot %></span><br/>
+
+                <span><%=Math.abs((artifacts[i].requiredCumulativeXP-artifacts[i].cumulativeXP)-artifacts[i].requiredXP) %>/<%= artifacts[i].requiredXP %> XP</span><br/>
                 <span style="font-weight:bold"><%= artifacts[i].main %></span><br/>
                 <span id =
                     "main<%=artifacts[i]._id%>"><%=Math.round(artifacts[i].mainVal*10)/10 %></span><br/>
                 <span id = "subs<%=artifacts[i]._id%>">
-                <%= artifacts[i].sub1 %>: <%=Math.round(artifacts[i].sub1Val*10)/10 %><br/>
-                <%= artifacts[i].sub2 %>: <%=Math.round(artifacts[i].sub2Val*10)/10 %><br/>
-                <%= artifacts[i].sub3 %>: <%=Math.round(artifacts[i].sub3Val*10)/10 %><br/>
-                <% if(artifacts[i].sub4) { %>
-                    <%= artifacts[i].sub4 %>: <%=Math.round(artifacts[i].sub4Val*10)/10 %><br/>
+
+                <% for(var j = 0; j < artifacts[i].subOrder.length; j++) {%>
+                    <%= artifacts[i].subOrder[j] %>: <%=Math.round(artifacts[i][artifacts[i].subOrder[j]]*10)/10 %><br/>
                 <% } %>
                 </span>
                 </button>

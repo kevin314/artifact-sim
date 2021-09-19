@@ -1,7 +1,13 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {listArtifacts, rollArtifact, levelArtifact, deleteArtifact} from '../public/artifactModule.mjs';
+import {listArtifacts, rollArtifacts, levelArtifact, lockArtifacts, unlockArtifacts, deleteArtifact} from '../public/artifactModule.mjs';
 import mongodb from 'mongodb';
+
+import jwt from 'jsonwebtoken';
+import session from 'express-session';
+import passport from 'passport';
+import '../passport.mjs';
+
 const {MongoClient, ObjectId} = mongodb;
 //import {getClient} from '../mongo.mjs';
 //import clientPromise from '../index.mjs';
@@ -23,71 +29,113 @@ MongoClient.connect(url, { useUnifiedTopology:
         const usersdb = client.db('usersdb');
         const discordUsers = usersdb.collection('discord');
 
+        router.get('/auth/discord', passport.authenticate('discord'));
+
+        //router.get('/login', (req, res) => {
+
         router.get('/test', (req, res) => {
             console.log('test');
             res.send('hi');
         })
 
         // Get user's artifacts
-        router.get('/users/:username/artifacts', (req, res) => {
-            console.log('GET ARTIFACTS');
+        router.get('/users/:userid/artifacts', (req, res) => {
+            console.log('GET ARTIFACTS!!');
             console.log(req.params);
-            const strArr = req.params['username'].split(':');
-            const username = strArr[0];
-            const disc = strArr[1];
-
-            if (username == '@me'){
+            const userid  = req.params['userid'];
+            if (params.userid == '@me'){
                 if (req.user) {
                     const user = req.user;
-                    listArtifacts(res, discorddb.collection(user['username']+'#'+user['discriminator']));
+                    listArtifacts(res, discorddb.collection(user.id));
                 } else {
+                    console.log("Unauth");
                     res.send("Unauthorized");
                 }
             } else {
-                listArtifacts(res, discorddb.collection(username+'#'+disc));
+                listArtifacts(res, discorddb.collection(userid));
             }
             //res.send('get artifacts');
         })
 
         // Roll artifacts for a user
-        router.post('/users/:username/artifacts', (req, res) => {
+        router.post('/users/:userid/artifacts', (req, res) => {
             console.log('ROLL');
             console.log(req.params);
-            const strArr = req.params['username'].split(':');
-            const username = strArr[0];
-            const disc = strArr[1];
-            const query = {'username':username, 'discriminator': disc};
+            const userid  = req.params['userid'];
+            const query = {'userID': userid};
             console.log(req.body);
             const setName = req.body.domain;
-            rollArtifact(res, setName, discorddb.collection(username+'#'+disc), discordUsers, query);
+            if(!setName) {
+                res.send("No domain specified");
+                return;
+            }
+            rollArtifacts(res, setName, discorddb.collection(userid), discordUsers, query);
             //res.send('roll artifacts');
         })
 
         // Level artifact
-        router.put('/users/:username/artifacts/:artifactid', (req, res) => {
+        router.put('/users/:userid/artifacts/:artifactid', (req, res) => {
             console.log('LEVEL');
             console.log(req.params);
-            const strArr = req.params['username'].split(':');
-            const username = strArr[0];
-            const disc = strArr[1];
-            const id = req.params['artifactid'];
-            levelArtifact(res, discorddb.collection(username+'#'+disc), ObjectId(id));
+            const userid  = req.params['userid'];
+            const artifactid = req.params['artifactid'];
+            const fodderList = req.body.fodder;
+            levelArtifact(res, discorddb.collection(userid), artifactid, fodderList, ObjectId);
+            //res.send('level artifact');
+        })
+
+        router.put('/users/:userid/artifacts/lock', (req, res) => {
+            console.log('LOCK');
+            console.log(req.params);
+            const userid  = req.params['userid'];
+            lockArtifacts(res, discorddb.collection(userid), req.body.lockList, ObjectId);
+            //res.send('level artifact');
+        })
+
+        router.put('/users/:userid/artifacts/unlock', (req, res) => {
+            console.log('UNLOCK');
+            console.log(req.params);
+            const userid  = req.params['userid'];
+            unlockArtifacts(res, discorddb.collection(userid), req.body.unlockList, ObjectId);
             //res.send('level artifact');
         })
 
         // Get user
-        router.get('/users/:username', (req, res) => {
+        router.get('/users/:userid', (req, res) => {
+            if(!req.user){
+                console.log("Not authorized");
+                res.send("Unauthorized");
+                return;
+            }
             console.log('USER');
             console.log(req.params);
-            const strArr = req.params['username'].split(':');
-            const username = strArr[0];
-            const disc = strArr[1];
-            const query = {'username':username, 'discriminator': disc};
+            const userid  = req.params['userid'];
+            const query = {'userID': userid};
             discordUsers.findOne(query)
                 .then(result => {
                     res.send(result);
                 });
         })
+
+        router.delete('/users/:userid', (req, res) => {
+            console.log('DELETE USER');
+            console.log(req.params);
+            const userid  = req.params['userid'];
+            const query = {'userID': userid};
+            discordUsers.deleteOne(query)
+                .then(result => {
+                    res.send("Account deleted");
+                })
+        })
+
+        /*
+        function parseParams(params) {
+            const strArr = params['username'].split(':');
+            const username = strArr[0];
+            const disc = strArr[1];
+            return {username: strArr[0], disc: strArr[1]};
+        }
+        */
 })
 export {router as discordAPI}
 
