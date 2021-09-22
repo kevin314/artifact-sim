@@ -46,6 +46,7 @@ function rollArtifact(domainName) {
                     `<span><label for= "radio${result['_id']}" <span> ${result.name}`+
                     `</span><br/>`+
                     `<span id = "level${result['_id']}">+${result.level} ${result.slot}</span><br/>`+
+                    `<span id = "xp${result['_id']}">${Math.abs((result.requiredCumulativeXP-result.cumulativeXP)-result.requiredXP)}/${result.requiredXP} XP</span><br/>`+
                     `<span style="font-weight:bold">${result.main}</span><br/>`+
                     `<span id = "main${result['_id']}">${Math.round(result['mainVal']*10)/10}</span><br/>`+
                     `${subsStr} </span>`+
@@ -61,6 +62,7 @@ function rollArtifact(domainName) {
 function levelUpdatePage(obj){
     const id = obj['_id'];
     //console.log(id);
+    const xp = document.getElementById('xp'+id);
     const level = document.getElementById('level'+id);
     const main = document.getElementById('main'+id);
     const subs = document.getElementById('subs'+id);
@@ -69,6 +71,7 @@ function levelUpdatePage(obj){
     for(var i = 0; i < obj.subOrder.length; i++){
         subsStr += `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`+`<br/>`
     }
+    xp.innerHTML = Math.abs((obj.requiredCumulativeXP-obj.cumulativeXP)-obj.requiredXP) + "/" + obj.requiredXP + " XP";
     level.innerHTML = "+" + obj['level'] + " " + obj['slot'];
     main.innerHTML = Math.round(obj['mainVal']*10)/10;
     subs.innerHTML = subsStr;
@@ -113,14 +116,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const logoutbutton = document.getElementById('logout');
-    logoutbutton.addEventListener('click', ()=> {
-        fetch('/logout', {
-            method: 'post',
-        })
-            .then(result => {
-                window.location.href = "/";
+    if(logoutbutton != null){
+        logoutbutton.addEventListener('click', ()=> {
+            fetch('/logout', {
+                method: 'post',
             })
-    });
+                .then(result => {
+                    window.location.href = "/";
+                })
+        });
+    }
 
     const deleteform = document.getElementById('deleteform');
     deleteform.addEventListener('submit', event => {
@@ -168,10 +173,14 @@ window.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(objBody),
         })
-            //.then(res => res.json())
+            .then(res => res.json())
             .then(result => {
-                //console.log(result);
-                //levelUpdatePage(result);
+                for(var i = 0; i < fodderartifactIDs.length; i++){
+                    var button = document.getElementById('button'+fodderartifactIDs[i]);
+                    button.remove();
+                }
+                console.log(result);
+                levelUpdatePage(result);
             })
     });
 
