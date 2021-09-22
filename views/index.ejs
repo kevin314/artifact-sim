@@ -1,6 +1,12 @@
 
 <!DOCTYPE html>
 <html>
+    <style>
+    body {
+        background-color: #30345c;
+        color: white
+      }
+    </style>
         <script type="module" src="client.js"></script>
     <head>
         <p>Welcome, <%= username %><p>
@@ -83,7 +89,7 @@
                              %></span><br/>
                          <span id = "level<%= artifacts[i]._id %>">+<%= artifacts[i].level %> <%= artifacts[i].slot %></span><br/>
 
-                <span><%=Math.abs((artifacts[i].requiredCumulativeXP-artifacts[i].cumulativeXP)-artifacts[i].requiredXP) %>/<%= artifacts[i].requiredXP %> XP</span><br/>
+                <span id = "xp<%= artifacts[i]._id %>"><%=Math.abs((artifacts[i].requiredCumulativeXP-artifacts[i].cumulativeXP)-artifacts[i].requiredXP) %>/<%= artifacts[i].requiredXP %> XP</span><br/>
                 <span style="font-weight:bold"><%= artifacts[i].main %></span><br/>
                 <span id =
                     "main<%=artifacts[i]._id%>"><%=Math.round(artifacts[i].mainVal*10)/10 %></span><br/>

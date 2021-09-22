@@ -514,14 +514,17 @@ function syncResinCount(userCollection, userQuery){
                 var resincount = result['resin'];
                 var elapsed = Math.floor(Date.now()/1000)-result['nextResinUpdate'];
                 var resinInc = Math.floor(elapsed/30)
-                console.log("resinInc: " + resinInc);
+                
                 if(resinInc < 0 || result['nextResinUpdate'] === -1 || result['resin'] == 160){
                     return resolve(result);
                 }
+                
                 if (resincount + (resinInc+1) > 160) {
                     console.log("RESINCOUNT EXCEEDED");
                     resinInc = 160 - (resincount+1);
                 }
+
+                //console.log("resinInc: " + resinInc);
 
                 if (resincount > 160) {
                     console.log("Resin count exceeded 160");
@@ -719,8 +722,8 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                         [subName]: increm,
                     },
                     $set: {
-                        'requiredXP': reqXP[obj['rarity']][level],
-                        'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+1],
+                        'requiredXP': reqXP[obj['rarity']][level+1],
+                        'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+2],
                         'levelHistory': levelHistory,
                     }
                 },
@@ -751,8 +754,8 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                     $set: {
                         [subStat]: statRoll,
                         'subOrder': subStats.concat(subStat),
-                        'requiredXP': reqXP[obj['rarity']][level],
-                        'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+1],
+                        'requiredXP': reqXP[obj['rarity']][level+1],
+                        'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+2],
                         'levelHistory': levelHistory,
                     },
                 },
@@ -775,15 +778,15 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                     'mainVal': mainInc,
                 },
                 $set: {
-                    'requiredXP': reqXP[obj['rarity']][level],
-                    'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+1]
+                    'requiredXP': reqXP[obj['rarity']][level+1],
+                    'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+2]
                 },
             },
             {returnDocument: "after"}
         )
             .then(result => result.value)
             .then(result =>{
-                if(result['cumulativeXP'] >= result['requiredCumulativeXP']){
+                if(result['level'] < result['rarity']*4  && result['cumulativeXP'] >= result['requiredCumulativeXP']){
                     return levelUpdateArtifact(res, artifactsCollection, artifactID, result);
                 }
                 res.send(result);
@@ -836,13 +839,14 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
                     })
                     for (var i = 0; i < arr.length; i++) {
                         totalXP += XPArr[i];
-                        if (arr.length > 1 && i <= (arr.length - 2) && (obj['cumulativeXP'] + totalXP >= cumulativeXPs[obj['rarity']*4])){
+                        if (arr.length > 1 && i <= (arr.length - 2) && (obj['cumulativeXP'] + totalXP >= cumulativeXPs[obj['rarity']][obj['rarity']*4])){
                             // Excess fodder, abort leveling
                             res.send("Excess fodder, artifacts not consumed");
                             return;
                         }
+                        //console.log(obj['cumulativeXP'] + totalXP)
                     }
-
+                    
                     artifactsCollection.findOneAndUpdate(
                         {"_id": artifactID},
                         {

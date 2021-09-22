@@ -8,7 +8,7 @@ import express from 'express'
 import favicon from 'serve-favicon';
 import bodyParser from 'body-parser';
 
-import jwt from 'jsonwebtoken';
+//import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 
 import cookieSession from 'express-session';
@@ -92,16 +92,16 @@ MongoClient.connect(url, { useUnifiedTopology:
         //initiateResinCount(discordUsers);
         //initiateResinCount(googleUsers);
 
-        app.post('/artifacts', (req, res) => {
-            rollAuth(req.user, res, req);
-        });
-
         app.get('/failed', (req, res) => {
             res.send('<h1>Log in Failed :</h1>')
         });
 
         app.get('/test', (req, res) => {
-                res.send('yo');
+            console.log('hi');
+            res.send()
+        })
+        app.get('/test', (req, res) => {
+            console.log('yo');
         })
         app.get('/', (req, res) => {
             //console.log(req.session);
@@ -112,9 +112,14 @@ MongoClient.connect(url, { useUnifiedTopology:
                 console.log("--------------------------");
                 authUser(req.user, res);
             } else {
-                authGuest(res);
+                var cookieid;
+                if(req.signedCookies['guestCookie']){
+                    cookieid = req.signedCookies['guestCookie']['_id'];
+                }
+                authGuest(res, cookieid);
                 console.log("--------------------------");
-                console.log(req.cookies);
+                console.log("GUEST")
+                console.log(req.signedCookies);
                 console.log("--------------------------");
                 //res.send("GUEST");
                 /*
@@ -147,19 +152,23 @@ MongoClient.connect(url, { useUnifiedTopology:
             }
         );
 
-        app.post('/logout', (req, res) => {
-            //req.logout();
-            //req.session = null;
-            req.session.destroy(() => {
-                res.redirect('/');
-            })
-        })
+        app.post('/artifacts', (req, res) => {
+            const idArr = checkAuth(req, res);
+            const artifactsdb = client.db(idArr[0]);
+            const userCollection = usersdb.collection(idArr[0]);
+
+            const artifactsCollection = artifactsdb.collection(idArr[2]);
+            (async ()=> {
+                await syncResinCount(userCollection, idArr[1])
+                rollArtifacts(res, req.body.domain, artifactsCollection, userCollection, idArr[1]);
+            })()
+        });
 
         app.post('/delete', (req, res) => {
             var remove = req.body.ids;
-            const idArr = checkAuth(req.user);
-            const artifactsdb = client.db(req.user.provider);
-            const artifactsCollection = artifactsdb.collection(idArr[1]);
+            const idArr = checkAuth(req, res);
+            const artifactsdb = client.db(idArr[0]);
+            const artifactsCollection = artifactsdb.collection(idArr[2]);
             var removeIdArr = [];
 
             remove.forEach(id => {
@@ -170,27 +179,69 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         app.post('/level', (req, res) => {
-            const idArr = checkAuth(req.user);
-            const artifactsdb = client.db(req.user.provider);
-            const artifactsCollection = artifactsdb.collection(idArr[1]);
+            const idArr = checkAuth(req, res);
+            const artifactsdb = client.db(idArr[0]);
+            const artifactsCollection = artifactsdb.collection(idArr[2]);
             var selected = req.body.id;
             var fodder = req.body.fodder;
 
             levelArtifact(res, artifactsCollection, selected, fodder, ObjectId);
         })
+
+        app.post('/logout', (req, res) => {
+            //req.logout();
+            //req.session = null;
+            req.session.destroy(() => {
+                res.redirect('/');
+            })
+        })
     });
 
-function checkAuth(user) {
-    if (user.provider == 'discord') {
-        return [{'userID': user.id}, user.id];
-    } else if (user.provider == 'google') {
-        return [{'email': user.emails[0].value}, user.emails[0].value];
+//idArr[0] = provider, [1] = query, [2] = id
+
+function checkAuth(req, res) {
+    if(req.user) {
+        var user = req.user;
+        if (user.provider == 'discord') {
+            return ['discord', {'userID': user.id}, user.id];
+        } else if (user.provider == 'google') {
+            return ['google', {'email': user.emails[0].value}, user.emails[0].value];
+        }
+    } else {
+        if(req.signedCookies['guestCookie'] == null) {
+            res.send("Unauthorized");
+            return;
+        }
+        var cookieid = req.signedCookies['guestCookie']['_id'];
+        var mongocookieid;
+        try {
+            mongocookieid = ObjectId(cookieid);
+        } catch (error) {
+            res.send(error);
+            return;
+        }
+        return ['guest', {'_id': mongocookieid}, cookieid];
     }
 }
 
 function rollAuth(user, res, req) {
     console.log(user);
     const idArr = checkAuth(user);
+    const artifactsdb = databases[user.provider];
+    const userCollection = usersdb.collection(user.provider);
+
+    const artifactsCollection = artifactsdb.collection(idArr[1]);
+    (async ()=> {
+        await syncResinCount(discordUsers, {'userID': user.id})
+        rollArtifacts(res, req.body.domain, artifactsCollection, userCollection, idArr[0]);
+    })()
+}
+
+function rollGuest(res, req) {
+    if(req.signedCookies['guestCookie']){
+        var cookieid = req.signedCookies['guestCookie']['_id'];
+    }
+    
     const artifactsdb = databases[user.provider];
     const userCollection = usersdb.collection(user.provider);
 
@@ -253,67 +304,65 @@ function authUser(user, res) {
     else if (user.provider == 'google') {
         const email = user.emails[0].value;
         const artifactsCollection = googledb.collection(email);
-        var resin;
+        var resin = 160;
+        var resinDate = -1;
         googleUsers.findOne({'email': email})
             .then(result => {
                 if(result == null) {
                     googleUsers.insertOne(
                         {
                             'email': email,
-                            'resin': 160
+                            'resin': 160,
+                            'nextResinUpdate': -1,
                         }
                     )
-                } else {
-                    resin = result.resin;
-                }
-                artifactsCollection.find().sort({$natural:-1}).toArray()
+                    artifactsCollection.find().sort({$natural:-1}).toArray()
                     .then(results => {
-                        res.render('index', { artifacts: results, username: user.name.givenName, resin: resin, loggedIn: true})
+                        res.render('index', { artifacts: results, username: user.name.givenName, resin: resin, resinDate: resinDate, loggedIn: true})
                     })
                     .catch(error => console.log(error))
+                } else {
+                    (async ()=> {
+                        var userObj = await syncResinCount(googleUsers, {'email': email})
+                        resin = userObj['resin'];
+                        resinDate = userObj['nextResinUpdate'];
+                        artifactsCollection.find().sort({$natural:-1}).toArray()
+                            .then(results => {
+                                /*
+                                console.log("RENDERING VIEW");
+                                console.log("RESIN: " + resin);
+                                console.log("RESINDATE: " +  resinDate);
+                                */
+                                res.render('index', { artifacts: results, username: user.name.givenName,
+                                    resin: resin, resinDate: resinDate, loggedIn: true})
+                            })
+                            .catch(error => console.log(error))
+                    })()
+                }
             });
     }
 }
 
-function signCookie(id) {
-    const token = jwt.sign({_id: id}, 'secretstring', {expiresIn: '50000'},(err, token)=> {
-        console.log('token: ');
-        console.log(token);
-        res.cookie('guestCookie', {token: token}, {signed: true,maxAge: 50000, httpOnly: true});
-        res.redirect('/home');
-    });
+function signCookie(res, id) {
+    res.cookie('guestCookie', {_id: id}, {signed: true, maxAge: 7776000000, httpOnly: true});
+    //res.redirect('/');
 }
 
-function authGuest(res) {
-    const userid = 'ok';
-    var resin = 160;
-    var resinDate = -1;
-    guestUsers.findOne({'_id': ObjectId(userid)})
+function authGuest(res, cookieid) {
+    var userid = cookieid;
+    try {
+        userid = ObjectId(userid);
+        guestUsers.findOne({'_id': userid})
         .then(result => {
             if(result == null) {
-                guestUsers.insertOne(
-                    {
-                        'resin': 160,
-                        'nextResinUpdate': -1,
-                    }
-                ).then(result => {
-                    const id = result.insertedId.toString();
-                    console.log("Signing cookie");
-                    signCookie(id);
-                    const artifactsCollection = guestdb.collection(id);
-                    artifactsCollection.find().sort({$natural:-1}).toArray()
-                        .then(results => {
-                            res.render('index', { artifacts: results, username: 'Guest',
-                                resin: resin, resinDate: resinDate, loggedIn: false})
-                        })
-                        .catch(error => console.log(error))
-                });
+                console.log("No guest user with associated cookie")
+                insertGuest(res);
             } else {
                 (async ()=> {
-                    var userObj = await syncResinCount(guestUsers, {'userID': userid})
-                    resin = userObj['resin'];
-                    resinDate = userObj['nextResinUpdate'];
-                    const artifactsCollection = guestdb.collection(userid);
+                    var userObj = await syncResinCount(guestUsers, {'_id': userid})
+                    var resin = userObj['resin'];
+                    var resinDate = userObj['nextResinUpdate'];
+                    const artifactsCollection = guestdb.collection(userid.toString());
                     artifactsCollection.find().sort({$natural:-1}).toArray()
                         .then(results => {
                             /*
@@ -321,12 +370,39 @@ function authGuest(res) {
                                 console.log("RESIN: " + resin);
                                 console.log("RESINDATE: " +  resinDate);
                                 */
-                            res.render('index', { artifacts: results, username: user.username,
+                            res.render('index', { artifacts: results, username: 'Guest',
                                 resin: resin, resinDate: resinDate, loggedIn: false})
                         })
                         .catch(error => console.log(error))
                 })()
             }
         });
+    } catch (error) {
+        console.log("No usable userid cookie")
+        insertGuest(res);
+    }
 }
+
+function insertGuest(res) {
+    var resin = 160;
+    var resinDate = -1;
+    guestUsers.insertOne(
+        {
+            'resin': 160,
+            'nextResinUpdate': -1,
+        }
+    ).then(result => {
+        const id = result.insertedId.toString();
+        console.log("Signing cookie");
+        signCookie(res, id);
+        const artifactsCollection = guestdb.collection(id);
+        artifactsCollection.find().sort({$natural:-1}).toArray()
+            .then(results => {
+                res.render('index', { artifacts: results, username: 'Guest',
+                    resin: resin, resinDate: resinDate, loggedIn: false})
+            })
+            .catch(error => console.log(error))
+        })
+}
+
 export {app as genshinApp};
