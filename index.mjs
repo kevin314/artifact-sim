@@ -106,10 +106,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         app.get('/', (req, res) => {
             //console.log(req.session);
             if(req.user) {
-                console.log("--------------------------");
-                console.log("USER")
-                console.log(req.cookies);
-                console.log("--------------------------");
                 authUser(req.user, res);
             } else {
                 var cookieid;
@@ -117,6 +113,7 @@ MongoClient.connect(url, { useUnifiedTopology:
                     cookieid = req.signedCookies['guestCookie']['_id'];
                 }
                 authGuest(res, cookieid);
+                /*
                 console.log("--------------------------");
                 console.log("GUEST")
                 console.log(req.signedCookies);
@@ -241,7 +238,6 @@ function rollGuest(res, req) {
     if(req.signedCookies['guestCookie']){
         var cookieid = req.signedCookies['guestCookie']['_id'];
     }
-    
     const artifactsdb = databases[user.provider];
     const userCollection = usersdb.collection(user.provider);
 
