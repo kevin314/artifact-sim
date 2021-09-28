@@ -1,3 +1,47 @@
+const schemaStats = {
+    1: {type: "number"},
+    2: {type: "number"},
+    3: {type: "number"},
+    4: {type: "number"},
+    5: {type: "number"},
+    6: {type: "number"},
+    7: {type: "number"},
+    8: {type: "number"},
+    9: {type: "number"},
+    10: {type: "number"},
+}
+
+const artifactSchema = {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    properties: {
+        _id: {type: "number"},
+        set: {type: "number"},
+        slot: {type: "number"},
+        rarity: {type: "number"},
+        level: {type: "number"},
+        cumulativeXP: {type: "number"},
+        requiredCumulativeXP: {type: "number"},
+        requiredXP: {type: "number"},
+        main: {type: "number"},
+        mainVal: {type: "number"},
+        locked: {type: "boolean"},
+        levelHistory: {
+            type: "object",
+            properties: {
+                4: {type: "object", properties: {...schemaStats}},
+                8: {type: "object", properties: {...schemaStats}},
+                12: {type: "object", properties: {...schemaStats}},
+                16: {type: "object", properties: {...schemaStats}},
+                20: {type: "object", properties: {...schemaStats}},
+            }
+        },
+        subOrder: {type: "number"},
+        ...schemaStats,
+    },
+    required: ["set", "slot", "rarity", "level", "cumulativeXP", "requiredCumulativeXP", "requiredXP", "main", "mainVal", "locked", "levelHistory", "subOrder"],
+}
+
 const enums = {
     3: 'three',
     4: 'four',
@@ -32,6 +76,7 @@ const cumulativeXPs = {
         18: 203850,
         19: 234900,
         20: 270475,
+        21: 270475,
     },
     4: {
         1: 2400,
@@ -50,6 +95,7 @@ const cumulativeXPs = {
         14: 92300,
         15: 106375,
         16: 122675,
+        17: 122675,
     },
     3: {
         1: 1800,
@@ -64,6 +110,7 @@ const cumulativeXPs = {
         10: 38425,
         11: 45050,
         12: 52275,
+        13: 52275,
     },
 }
 
@@ -89,6 +136,7 @@ const reqXP = {
         17: 27050,
         18: 31050,
         19: 35575,
+        20: 35575,
     },
     4: {
         0: 2400,
@@ -107,6 +155,7 @@ const reqXP = {
         13: 12125,
         14: 14075,
         15: 16300,
+        16: 16300,
     },
     3: {
         0: 1800,
@@ -121,6 +170,7 @@ const reqXP = {
         9: 6075,
         10: 6625,
         11: 7225,
+        12: 7225,
     },
 }
 
@@ -500,12 +550,123 @@ const numStats_dist = {
     },
 }
 
+const stringToNumSets = {
+    'adventurer': 0,
+    'lucky_dog': 1,
+    'doctor': 2,
+    'sojournor': 3,
+    'miracle': 4,
+    'berserker': 5,
+    'instructor': 6,
+    'exile': 7,
+    'defenders_will': 8,
+    'brave_heart': 9,
+    'martial_artist': 10,
+    'gambler': 11,
+    'scholar': 12,
+    'illumination': 13,
+    'destiny': 14,
+    'wisdom': 15,
+    'springtime': 16,
+    'gladiator': 17,
+    'wanderers_troupe': 18,
+    'thundersoother': 19,
+    'thundering_fury': 20,
+    'maiden_beloved': 21,
+    'viridescent_venerer': 22,
+    'crimson_witch': 23,
+    'lavawalker': 24,
+    'noblesse_oblige': 25,
+    'bloodstained_chivalry': 26,
+    'archaic_petra': 27,
+    'retracing_bolide': 28,
+    'icebreaker': 29,
+    'heart_of_depth': 30,
+    'tenacity_millelith': 31,
+    'pale_flame': 32,
+    'severed_fate': 33,
+    'shimenawa': 34,
+}
+var numToStringSets = {}
+for(const key in stringToNumSets){
+    numToStringSets[stringToNumSets[key]] = key;
+}
+
+const stringToNumSlots = {
+    'flower': 0,
+    'plume': 1,
+    'sands': 2,
+    'goblet': 3,
+    'circlet': 4,
+}
+
+var numToStringSlots = {}
+for(const key in stringToNumSlots){
+    numToStringSlots[stringToNumSlots[key]] = key;
+}
+
+const stringToNumStats = {
+    'HP': 1,
+    'ATK': 2,
+    'DEF': 3,
+    'HP%': 4,
+    'ATK%': 5,
+    'DEF%': 6,
+    'Elemental Mastery': 7,
+    'Energy Recharge%': 8,
+    'CRIT Rate%': 9,
+    'CRIT DMG%': 10,
+    'Pyro DMG Bonus%': 11,
+    'Electro DMG Bonus%': 12,
+    'Cryo DMG Bonus%': 13,
+    'Hydro DMG Bonus%': 14,
+    'Anemo DMG Bonus%': 15,
+    'Geo DMG Bonus%': 16,
+    'Physical DMG Bonus%': 17,
+    'Healing Bonus%': 18,
+}
+
+var numToStringStats = {}
+for(const key in stringToNumStats){
+    numToStringStats[stringToNumStats[key]] = key;
+}
+
 /*
 var globalCountdown;
 function getResinCountdown() {
     return globalCountdown;
 }
 */
+
+function convertArtifacts(objs) {
+    var clientArr = [];
+    objs.forEach(element => {
+        var clientObj = {};
+        clientObj['_id'] = element['_id'];
+        clientObj['slot'] = numToStringSlots[element.slot];
+        //console.log(numToStringSets[element.set]);
+        clientObj['name'] = artifactSets[numToStringSets[element.set]][clientObj['slot']];
+        clientObj['subOrder'] = decodeSubstatOrder(element.subOrder);
+
+        //console.log(clientObj['subOrder']);
+
+        clientObj['subOrder'].forEach(stat => {
+            clientObj[stat] = element[stringToNumStats[stat]];
+        })
+        clientObj['rarity'] = element.rarity;
+        clientObj['level'] = element.level;
+        clientObj['requiredCumulativeXP'] = element.requiredCumulativeXP;
+        clientObj['cumulativeXP'] = element.cumulativeXP;
+        clientObj['requiredXP'] = element.requiredXP;
+        clientObj['main'] = numToStringStats[element.main];
+        clientObj['mainVal'] = element.mainVal;
+        clientObj['locked'] = element.locked;
+        clientObj['levelHistory'] = element.levelHistory;
+
+        clientArr.push(clientObj);
+    })
+    return clientArr;
+}
 
 function syncResinCount(userCollection, userQuery){
     return new Promise(resolve=> {
@@ -514,11 +675,11 @@ function syncResinCount(userCollection, userQuery){
                 var resincount = result['resin'];
                 var elapsed = Math.floor(Date.now()/1000)-result['nextResinUpdate'];
                 var resinInc = Math.floor(elapsed/30)
-                
+
                 if(resinInc < 0 || result['nextResinUpdate'] === -1 || result['resin'] == 160){
                     return resolve(result);
                 }
-                
+
                 if (resincount + (resinInc+1) > 160) {
                     console.log("RESINCOUNT EXCEEDED");
                     resinInc = 160 - (resincount+1);
@@ -591,12 +752,42 @@ function weightedRand(spec, skipArr) {
         }
     }
 }
-function listArtifacts(res, artifactsCollection){
+
+function listArtifacts(res, artifactsCollection, compressionTable, compressObject){
     artifactsCollection.find().sort({$natural:-1}).toArray()
         .then(results => {
-            res.send(results)
+            if(compressionTable && compressObject) {
+                var compressedArr = []
+                results.forEach(elem => {
+                    compressedArr.push(compressObject(compressionTable, elem));
+                })
+                res.status(200).send(compressedArr)
+            } else {
+                res.status(200).send(results)
+            }
         })
         .catch(error => console.log(error))
+}
+
+function encodeSubstatOrder(subStats) {
+    var subStatOrderEncode = 0;
+    var len = subStats.length;
+    for(var i = 0; i < len; i++){
+        var statNum = stringToNumStats[subStats[i]];
+        subStatOrderEncode += statNum * (32 ** (len-(i+1)));
+    }
+    return subStatOrderEncode;
+}
+
+function decodeSubstatOrder(value){
+    var subStats = [];
+    var divisor = value;
+    while(divisor > 0) {
+        var remainder = divisor % 32;
+        divisor = Math.floor(divisor/32);
+        subStats.unshift(numToStringStats[remainder]);
+    }
+    return subStats;
 }
 
 function rollSingle(domainName, rarity){
@@ -613,15 +804,15 @@ function rollSingle(domainName, rarity){
     var initialMainVal = main_percentages[randSlot][mainstat]['stats'][enums[rarity]]['0'];
 
     var initialArtifact = {
-        name: pickedSet[randSlot],
-        set: pickedSetName,
-        slot: randSlot,
+        //name: pickedSet[randSlot],
+        set: stringToNumSets[pickedSetName],
+        slot: stringToNumSlots[randSlot],
         rarity: rarity,
         level: 0,
         cumulativeXP: 0,
         requiredCumulativeXP: cumulativeXPs[rarity][1],
         requiredXP: reqXP[rarity][0],
-        main: mainstat,
+        main: stringToNumStats[mainstat],
         mainVal: initialMainVal,
         locked: false,
         levelHistory: {},
@@ -635,14 +826,17 @@ function rollSingle(domainName, rarity){
     for(var i = 0; i < numSubs; i++){
         subStats[i] = weightedRand(sub_percentages, [mainstat].concat(subStats));
         var statRoll = sub_percentages[subStats[i]]['stats'][enums[rarity]][getRandInt(4)];
-        initialArtifact[subStats[i]] = statRoll;
+        //HP: 123, => 0: 123
+        initialArtifact[stringToNumStats[subStats[i]]] = statRoll;
         /*
                     initialArtifact['sub'+ i] = subStats[i-1];
                     initialArtifact['sub'+ i + 'Val'] = statRoll;
                     */
     }
 
-    initialArtifact['subOrder'] = subStats;
+    var subStatOrderEncode = encodeSubstatOrder(subStats);
+
+    initialArtifact['subOrder'] = subStatOrderEncode;
     return initialArtifact;
 }
 
@@ -650,7 +844,7 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
     userCollection.findOne(userQuery)
         .then(result =>{
             if(result['resin'] < 5) {
-                res.send("Insufficient resin");
+                res.status(400).send("Insufficient resin");
                 return;
             } else {
                 if (result['resin'] === 160) {
@@ -686,7 +880,7 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
 
                 artifactsCollection.insertMany(artifactArr)
                     .then(() => {
-                        res.send(artifactArr)
+                        res.status(200).send(artifactArr)
                         //res.end();
                     })
                     .catch(error => console.error(error))
@@ -694,8 +888,11 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
         })
 }
 
-function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
+function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
     console.log('Level update');
+
+    const obj = convertArtifacts([mongoObj])[0];
+
     var numSubs = obj['subOrder'].length;
 
     var mainPercentages = main_percentages[obj['slot']][obj['main']]['stats'][enums[obj['rarity']]];
@@ -707,11 +904,12 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
         if(numSubs === 4){
             var randNum = getRandInt(4);
             //updateJson['sub'+randNum+'Val'] = sub_percentages[obj['sub'+randNum]]['stats']['five'][Math.floor(Math.random()*4)];
-            var subName = obj.subOrder[randNum];
+            var subStats = obj.subOrder;
+            var subName = subStats[randNum];
             var increm  = sub_percentages[subName]['stats'][enums[obj['rarity']]][Math.floor(Math.random()*4)];
 
             var levelHistory = obj['levelHistory'];
-            levelHistory[level+1] = {[subName]: increm};
+            levelHistory[level+1] = {[stringToNumStats[subName]]: increm};
             //var valProp = 'sub'+randNum+'Val';
             artifactsCollection.findOneAndUpdate(
                 {"_id": artifactID},
@@ -719,7 +917,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                     $inc: {
                         'level': 1,
                         'mainVal': mainInc,
-                        [subName]: increm,
+                        [stringToNumStats[subName]]: increm,
                     },
                     $set: {
                         'requiredXP': reqXP[obj['rarity']][level+1],
@@ -731,20 +929,24 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
             )
                 .then(result => result.value)
                 .then(result =>{
-                    if(result['cumulativeXP'] >= result['requiredCumulativeXP']){
+                    if(result['level'] < result['rarity']*4  && result['cumulativeXP'] >= result['requiredCumulativeXP']){
                         return levelUpdateArtifact(res, artifactsCollection, artifactID, result);
                     }
-                    res.send(result);
+                    res.status(200).send(result);
                     //res.redirect('/');
                 });
 
         } else {
+            // Decode substat order
             var subStats = obj.subOrder;
             var subStat = weightedRand(sub_percentages, [obj['main']].concat(subStats));
             var statRoll = sub_percentages[subStat]['stats'][enums[obj['rarity']]][Math.floor(Math.random()*4)];
 
+            subStats = subStats.concat(subStat);
+            var orderEncoded = encodeSubstatOrder(subStats);
+
             var levelHistory = obj['levelHistory'];
-            levelHistory[level+1] = {[subStat]: statRoll};
+            levelHistory[level+1] = {[stringToNumStats[subStat]]: statRoll};
 
             artifactsCollection.findOneAndUpdate(
                 {"_id": artifactID},
@@ -752,8 +954,8 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                     $inc: {'level': 1,
                         'mainVal': mainInc},
                     $set: {
-                        [subStat]: statRoll,
-                        'subOrder': subStats.concat(subStat),
+                        [stringToNumStats[subStat]]: statRoll,
+                        'subOrder': orderEncoded,
                         'requiredXP': reqXP[obj['rarity']][level+1],
                         'requiredCumulativeXP': cumulativeXPs[obj['rarity']][level+2],
                         'levelHistory': levelHistory,
@@ -763,10 +965,10 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
             )
                 .then(result => result.value)
                 .then(result =>{
-                    if(result['cumulativeXP'] >= result['requiredCumulativeXP']){
+                    if(result['level'] < result['rarity']*4  && result['cumulativeXP'] >= result['requiredCumulativeXP']){
                         return levelUpdateArtifact(res, artifactsCollection, artifactID, result);
                     }
-                    res.send(result);
+                    res.status(200).send(result);
                 });
         }
     } else {
@@ -789,7 +991,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
                 if(result['level'] < result['rarity']*4  && result['cumulativeXP'] >= result['requiredCumulativeXP']){
                     return levelUpdateArtifact(res, artifactsCollection, artifactID, result);
                 }
-                res.send(result);
+                res.status(200).send(result);
                 //res.redirect('/');
             });
     }
@@ -797,13 +999,13 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, obj) {
 
 function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId){
     console.log("In levelArtifact");
-    console.log(selected);
+    //console.log(selected);
     if (selected === undefined || fodderIDArr.length === 0) {
-        res.send("Missing selection");
+        res.status(400).send("Missing selection");
         return;
     }
     if (fodderIDArr.includes(selected)){
-        res.send("Artifact selected for leveling is included as its own fodder");
+        res.status(400).send("Artifact selected for leveling is included as its own fodder");
         return;
     }
 
@@ -819,7 +1021,7 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
             //console.log(obj['level']);
             if(obj['level'] >= obj['rarity']*4) {
                 console.log("Max level");
-                res.send('Max level reached');
+                res.status(400).send('Max level reached');
                 return;
             }
 
@@ -829,7 +1031,7 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
                 .then(arr => {
                     arr.forEach(artifact => {
                         if (artifact['locked'] === true) {
-                            res.send("Selected fodder includes locked artifact, no fodder consumed");
+                            res.status(400).send("Selected fodder includes locked artifact, no fodder consumed");
                             return;
                         }
                         XPArr.push(Math.floor(baseXP[artifact.rarity] + (artifact.cumulativeXP * 0.8)));
@@ -841,12 +1043,12 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
                         totalXP += XPArr[i];
                         if (arr.length > 1 && i <= (arr.length - 2) && (obj['cumulativeXP'] + totalXP >= cumulativeXPs[obj['rarity']][obj['rarity']*4])){
                             // Excess fodder, abort leveling
-                            res.send("Excess fodder, artifacts not consumed");
+                            res.status(400).send("Excess fodder, artifacts not consumed");
                             return;
                         }
                         //console.log(obj['cumulativeXP'] + totalXP)
                     }
-                    
+
                     artifactsCollection.findOneAndUpdate(
                         {"_id": artifactID},
                         {
@@ -857,9 +1059,11 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
                         {returnDocument: "after"}
                     )
                         .then(result => result.value)
-                        .then(result => {
-                            if(result['cumulativeXP'] >= result['requiredCumulativeXP']){
-                                levelUpdateArtifact(res, artifactsCollection, artifactID, result);
+                        .then(resultObj => {
+                            if(resultObj['cumulativeXP'] >= resultObj['requiredCumulativeXP']){
+                                levelUpdateArtifact(res, artifactsCollection, artifactID, resultObj);
+                            } else {
+                                res.status(200).send(resultObj);
                             }
                             deleteArtifact(res, fodderIDs, artifactsCollection, false)
                         })
@@ -870,7 +1074,7 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
 function deleteArtifact(res, removeList, artifactsCollection, sendResponse=true) {
     if (removeList.length === 0){
         if(sendResponse === true) {
-            res.send("No items selected for deletion");
+            res.status(400).send("No items selected for deletion");
         }
         return;
     }
@@ -878,7 +1082,7 @@ function deleteArtifact(res, removeList, artifactsCollection, sendResponse=true)
     artifactsCollection.deleteMany({"_id": {$in: removeList}})
         .then(result => {
             if(sendResponse === true){
-                res.send(result.deletedCount + " artifacts deleted");
+                res.status(200).send(result.deletedCount + " artifacts deleted");
             }
         })
         .catch(error => console.error(error))
@@ -904,7 +1108,7 @@ function deleteArtifact(res, removeList, artifactsCollection, sendResponse=true)
 
 function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
     if (lockList.length === 0) {
-        res.send("No selection for lock");
+        res.status(400).send("No selection for lock");
         return;
     }
     var lockIDs = [];
@@ -917,14 +1121,14 @@ function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
         {$set: {"locked": true}},
     )
         .then(result => {
-            res.send(result.modifiedCount + " artifacts locked");
+            res.status(200).send(result.modifiedCount + " artifacts locked");
         })
         .catch(error => console.error(error))
 }
 
 function unlockArtifacts(res, artifactsCollection, unlockList, ObjectId) {
     if (unlockList.length === 0) {
-        res.send("No selection for unlock");
+        res.status(400).send("No selection for unlock");
         return;
     }
     var unlockIDs = [];
@@ -937,11 +1141,11 @@ function unlockArtifacts(res, artifactsCollection, unlockList, ObjectId) {
         {$set: {"locked": false}},
     )
         .then(result => {
-            res.send(result.modifiedCount + " artifacts unlocked");
+            res.status(200).send(result.modifiedCount + " artifacts unlocked");
         })
         .catch(error => console.error(error))
 }
 
 function deleteUser(){}
 
-export{artifacts, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact,syncResinCount, lockArtifacts, unlockArtifacts}
+export{artifactSchema, artifacts, artifactSets, numToStringStats, numToStringSlots, numToStringSets, stringToNumStats, convertArtifacts, decodeSubstatOrder, encodeSubstatOrder, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact,syncResinCount, lockArtifacts, unlockArtifacts}

@@ -1,5 +1,5 @@
 /*import * as artifacts from 'artifacts.js';*/
-import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
+import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
 //const {artifacts, sub_percentages, main_percentages} = artMod;
 console.log("hi");
 
@@ -11,9 +11,10 @@ function rollArtifact(domainName) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(request),
     })
-        .then(res => res.json())
-        .then(resultArr => {
-           //console.log(resultArr);
+        .then(res => {
+            res.json()
+        .then(resArr => {
+            const resultArr = convertArtifacts(resArr);
             const levelbutton = document.getElementById('levelform');
             const resin = document.getElementById('resincount');
 
@@ -56,6 +57,7 @@ function rollArtifact(domainName) {
                 //location.reload();
                 //window.location.href = "/";
             }
+        })
         })
 }
 
@@ -173,14 +175,18 @@ window.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(objBody),
         })
-            .then(res => res.json())
-            .then(result => {
-                for(var i = 0; i < fodderartifactIDs.length; i++){
-                    var button = document.getElementById('button'+fodderartifactIDs[i]);
-                    button.remove();
+            .then(res => {
+                if (res.status === 200) {
+                    for(var i = 0; i < fodderartifactIDs.length; i++){
+                        var button = document.getElementById('button'+fodderartifactIDs[i]);
+                        button.remove();
+                    }
                 }
-                console.log(result);
-                levelUpdatePage(result);
+                res.json().then(result => {
+                    var obj = convertArtifacts([result])[0];
+                    console.log(obj);
+                    levelUpdatePage(obj);
+                })
             })
     });
 

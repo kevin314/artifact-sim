@@ -1,12 +1,17 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {listArtifacts, rollArtifacts, levelArtifact, lockArtifacts, unlockArtifacts, deleteArtifact} from '../public/artifactModule.mjs';
+import {artifactSchema, listArtifacts, rollArtifacts, levelArtifact, lockArtifacts, unlockArtifacts, deleteArtifact} from '../public/artifactModule.mjs';
 import mongodb from 'mongodb';
 
 import jwt from 'jsonwebtoken';
 import session from 'express-session';
 import passport from 'passport';
 import '../passport.mjs';
+
+import {createCompressionTable, compressObject} from 'jsonschema-key-compression';
+import {decompressObject} from 'jsonschema-key-compression';
+
+const compressionTable = createCompressionTable(artifactSchema);
 
 const {MongoClient, ObjectId} = mongodb;
 //import {getClient} from '../mongo.mjs';
@@ -18,6 +23,7 @@ const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 */
+
 
 const url = 'mongodb+srv://kevin314:kevin3.141592@cluster0.un2qo.mongodb.net/testproj?retryWrites=true&w=majority';
 
@@ -47,13 +53,13 @@ MongoClient.connect(url, { useUnifiedTopology:
             if (params.userid == '@me'){
                 if (req.user) {
                     const user = req.user;
-                    listArtifacts(res, discorddb.collection(user.id));
+                    listArtifacts(res, discorddb.collection(user.id), compressionTable, compressObject);
                 } else {
                     console.log("Unauth");
                     res.send("Unauthorized");
                 }
             } else {
-                listArtifacts(res, discorddb.collection(userid));
+                listArtifacts(res, discorddb.collection(userid), compressionTable, compressObject);
             }
             //res.send('get artifacts');
         })
@@ -81,7 +87,14 @@ MongoClient.connect(url, { useUnifiedTopology:
             const userid  = req.params['userid'];
             const artifactid = req.params['artifactid'];
             const fodderList = req.body.fodder;
-            levelArtifact(res, discorddb.collection(userid), artifactid, fodderList, ObjectId);
+
+            if(userid = '@me'){
+                if(req.user){
+                    levelArtifact(res, discorddb.collection(userid), artifactid, fodderList, ObjectId);
+                } else {
+                    res.send("Unauthorized", 401);
+                }
+            }
             //res.send('level artifact');
         })
 
