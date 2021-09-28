@@ -11,6 +11,7 @@
     "express": "^4.17.1",
     "express-session": "^1.17.2",
     "express-subdomain": "^1.0.5",
+    "jsonschema-key-compression": "^1.6.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.9",
     "passport": "^0.4.1",

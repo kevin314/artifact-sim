@@ -2,7 +2,7 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-import {artifacts, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact, syncResinCount} from './public/artifactModule.mjs';
+import {artifactSchema, artifacts, artifactSets, numToStringSets,  numToStringSlots, stringToNumStats, convertArtifacts, decodeSubstatOrder, encodeSubstatOrder, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact, syncResinCount} from './public/artifactModule.mjs';
 import {discordAPI} from './routes/api.mjs';
 import express from 'express'
 import favicon from 'serve-favicon';
@@ -22,6 +22,11 @@ const {ObjectId} = mongodb;
 const {MongoClient} = mongodb;
 import assert from 'assert';
 
+
+import {createCompressionTable, compressObject} from 'jsonschema-key-compression';
+import {decompressObject} from 'jsonschema-key-compression';
+
+const compressionTable = createCompressionTable(artifactSchema);
 
 const router = express.Router();
 const port = 3000;
@@ -168,9 +173,11 @@ MongoClient.connect(url, { useUnifiedTopology:
             const artifactsCollection = artifactsdb.collection(idArr[2]);
             var removeIdArr = [];
 
-            remove.forEach(id => {
-                removeIdArr.push(ObjectId(id));
-            });
+            if (remove) {
+                remove.forEach(id => {
+                    removeIdArr.push(ObjectId(id));
+                });
+            }
 
             deleteArtifact(res, removeIdArr, artifactsCollection);
         });
@@ -248,6 +255,7 @@ function rollGuest(res, req) {
     })()
 }
 
+
 function authUser(user, res) {
     /*
     console.log('---------------------------------------------------');
@@ -273,7 +281,8 @@ function authUser(user, res) {
                     console.log("RESULT NULL")
                     artifactsCollection.find().sort({$natural:-1}).toArray()
                         .then(results => {
-                            res.render('index', { artifacts: results, username: user.username,
+                            var artifactsArr = convertArtifacts(results);
+                            res.render('index', { artifacts: artifactsArr, username: user.username,
                                 resin: resin, resinDate: resinDate, loggedIn: true})
                         })
                         .catch(error => console.log(error))
@@ -289,7 +298,29 @@ function authUser(user, res) {
                                 console.log("RESIN: " + resin);
                                 console.log("RESINDATE: " +  resinDate);
                                 */
-                                res.render('index', { artifacts: results, username: user.username,
+                                var artifactsArr = convertArtifacts(results);
+
+                                /*
+                                var compressedArr = []
+                                results.forEach(elem => {
+                                    compressedArr.push(compressObject(compressionTable, elem));
+                                })
+                                console.log('Compressed Arr');
+                                console.log(compressedArr);
+                                console.log(compressedArr[0]['|c']);
+                                console.log('===========================');
+
+                                var decompressedArr = []
+                                compressedArr.forEach(elem => {
+                                    decompressedArr.push(decompressObject(compressionTable, elem));
+                                })
+                                console.log('Decompressed Arr');
+                                console.log(decompressedArr);
+                                console.log(decompressedArr[0]['levelHistory']);
+                                console.log('===========================');
+                                */
+
+                                res.render('index', { artifacts: artifactsArr, username: user.username,
                                     resin: resin, resinDate: resinDate, loggedIn: true})
                             })
                             .catch(error => console.log(error))
@@ -314,7 +345,8 @@ function authUser(user, res) {
                     )
                     artifactsCollection.find().sort({$natural:-1}).toArray()
                     .then(results => {
-                        res.render('index', { artifacts: results, username: user.name.givenName, resin: resin, resinDate: resinDate, loggedIn: true})
+                        var artifactsArr = convertArtifacts(results);
+                        res.render('index', { artifacts: artifactsArr, username: user.name.givenName, resin: resin, resinDate: resinDate, loggedIn: true})
                     })
                     .catch(error => console.log(error))
                 } else {
@@ -329,7 +361,8 @@ function authUser(user, res) {
                                 console.log("RESIN: " + resin);
                                 console.log("RESINDATE: " +  resinDate);
                                 */
-                                res.render('index', { artifacts: results, username: user.name.givenName,
+                                var artifactsArr = convertArtifacts(results);
+                                res.render('index', { artifacts: artifactsArr, username: user.name.givenName,
                                     resin: resin, resinDate: resinDate, loggedIn: true})
                             })
                             .catch(error => console.log(error))
@@ -366,7 +399,8 @@ function authGuest(res, cookieid) {
                                 console.log("RESIN: " + resin);
                                 console.log("RESINDATE: " +  resinDate);
                                 */
-                            res.render('index', { artifacts: results, username: 'Guest',
+                            var artifactsArr = convertArtifacts(results);
+                            res.render('index', { artifacts: artifactsArr, username: 'Guest',
                                 resin: resin, resinDate: resinDate, loggedIn: false})
                         })
                         .catch(error => console.log(error))
@@ -394,7 +428,8 @@ function insertGuest(res) {
         const artifactsCollection = guestdb.collection(id);
         artifactsCollection.find().sort({$natural:-1}).toArray()
             .then(results => {
-                res.render('index', { artifacts: results, username: 'Guest',
+                var artifactsArr = convertArtifacts(results);
+                res.render('index', { artifacts: artifactsArr, username: 'Guest',
                     resin: resin, resinDate: resinDate, loggedIn: false})
             })
             .catch(error => console.log(error))
