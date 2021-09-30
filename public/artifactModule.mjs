@@ -646,7 +646,7 @@ function convertArtifacts(objs) {
         clientObj['slot'] = numToStringSlots[element.slot];
         //console.log(numToStringSets[element.set]);
         clientObj['name'] = artifactSets[numToStringSets[element.set]][clientObj['slot']];
-        clientObj['subOrder'] = decodeSubstatOrder(element.subOrder);
+        clientObj['subOrder'] = decodeSubstatOrder(element.subOrder, true);
 
         //console.log(clientObj['subOrder']);
 
@@ -769,23 +769,31 @@ function listArtifacts(res, artifactsCollection, compressionTable, compressObjec
         .catch(error => console.log(error))
 }
 
-function encodeSubstatOrder(subStats) {
+function encodeSubstatOrder(subStats, convert) {
     var subStatOrderEncode = 0;
     var len = subStats.length;
     for(var i = 0; i < len; i++){
-        var statNum = stringToNumStats[subStats[i]];
+        if(convert == true) {
+            var statNum = stringToNumStats[subStats[i]];
+        } else {
+            var statNum = subStats[i];
+        }
         subStatOrderEncode += statNum * (32 ** (len-(i+1)));
     }
     return subStatOrderEncode;
 }
 
-function decodeSubstatOrder(value){
+function decodeSubstatOrder(value, convert){
     var subStats = [];
     var divisor = value;
     while(divisor > 0) {
         var remainder = divisor % 32;
         divisor = Math.floor(divisor/32);
-        subStats.unshift(numToStringStats[remainder]);
+        if(convert) {
+            subStats.unshift(numToStringStats[remainder]);
+        } else {
+            subStats.unshift(remainder);
+        }
     }
     return subStats;
 }
@@ -834,7 +842,7 @@ function rollSingle(domainName, rarity){
                     */
     }
 
-    var subStatOrderEncode = encodeSubstatOrder(subStats);
+    var subStatOrderEncode = encodeSubstatOrder(subStats, true);
 
     initialArtifact['subOrder'] = subStatOrderEncode;
     return initialArtifact;
@@ -943,7 +951,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
             var statRoll = sub_percentages[subStat]['stats'][enums[obj['rarity']]][Math.floor(Math.random()*4)];
 
             subStats = subStats.concat(subStat);
-            var orderEncoded = encodeSubstatOrder(subStats);
+            var orderEncoded = encodeSubstatOrder(subStats, true);
 
             var levelHistory = obj['levelHistory'];
             levelHistory[level+1] = {[stringToNumStats[subStat]]: statRoll};
