@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {artifactSchema, listArtifacts, rollArtifacts, levelArtifact, lockArtifacts, unlockArtifacts, deleteArtifact} from '../public/artifactModule.mjs';
+import {refreshStats, compareStats} from '../public/statistics.mjs'
 import mongodb from 'mongodb';
 
 import jwt from 'jsonwebtoken';
@@ -139,6 +140,20 @@ MongoClient.connect(url, { useUnifiedTopology:
                 .then(result => {
                     res.send("Account deleted");
                 })
+        })
+
+        router.get('/refresh', (req, res) => {
+            console.log("Refreshing stats...");
+            refreshStats(discorddb);
+        })
+
+        router.post('/users/:userid/artifacts/compare', (req, res) => {
+            console.log("Referencing stats");
+            //console.log(req.params);
+            const userid  = req.params['userid'];
+            const list = req.body.list;
+            //console.log(list);
+            compareStats(res, userid, list, discorddb, ObjectId);
         })
 
         /*
