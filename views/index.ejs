@@ -2,13 +2,9 @@
 <!DOCTYPE html>
 <html>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
-    <style>
-    body {
-        background-color: #30345c;
-        color: white
-      }
-    </style>
-        <script type="module" src="client.js"></script>
+    <link rel="stylesheet" href="index.css">
+    
+    <script type="module" src="client.js"></script>
     <head>
         <p>Welcome, <%= username %><p>
         <% if(loggedIn === true) { %>
@@ -60,31 +56,89 @@
             checkboxes[i].checked = source.checked;
         }
     }
+    function test(obj){
+        //console.log(obj);
+        var radio = document.getElementById('radio' + obj._id);
+        console.log(radio.checked);
+        if(radio.checked === false) {
+            radio.checked = true;
+            var cardheader = document.getElementById('cardheader');
+            cardheader.innerHTML = obj.name; 
+            document.getElementById('cardmain').innerHTML = obj.main;
+            document.getElementById('cardmainVal').innerHTML = obj.mainVal;
+        } 
+    }
     </script>
 
     <input type="checkbox" onClick="toggle(this)" /> Toggle All<br/>
     <button type="submit" form="deleteform" id="deleteformid">Delete</button>
     <button type="submit" form="levelform">Level</button>
 
+    <% if(artifacts[0]) { %>
+    <div class="card">
+        <header class="card-header">
+            <p class="card-header-title is-centered" id= cardheader>
+              <%= artifacts[0].name %>
+            </p>
+        </header>
+        <div class="card-image">
+            <figure class="image is-128x128">
+            <img src="images/Item_Flower_of_Blaze.png" alt="Placeholder image">
+            </figure>
+        </div>
+        <div class="card-content">
+            <div class="media">
+                <div class="media-right" id="lock">
+                    <figure class="image is-24x24">
+                    <img src="images/lock.png" alt="Placeholder image">
+                    </figure>
+                </div>
+                <div class="media-content" id="card-main">
+                    <p class="subtitle is-6" id="cardmain"> <%- artifacts[0].main %></p>
+                    <p class="title is-4" id="cardmainVal"><%- artifacts[0].mainVal %></p>
+                </div>
+            </div>
+
+            <div class="content" id="cardstats">
+                <ul>
+                    <% for(var j = 0; j < artifacts[0].subOrder.length; j++) {%>
+                        <li><%= artifacts[0].subOrder[j] %>+<%=Math.round(artifacts[0][artifacts[0].subOrder[j]]*10)/10 %><br/></li>
+                    <% } %>
+                </ul>
+            </div>
+
+            <div class="content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Phasellus nec iaculis mauris. <a>@bulmaio</a>.
+                <a href="#">#css</a> <a href="#">#responsive</a>
+                <br>
+                <time datetime="2016-1-1">11:09 PM - 1 Jan 2016</time>
+            </div>
+        </div>
+        <footer class="card-footer">
+            <button type="button" id="footerbutton" class="card-footer-item">Details</button>
+          </footer>
+    </div>
+    <% } %>
+
     <ul class="artifacts">
         <!-- Loop through quotes -->
         <form action="/delete" method="post" id="deleteform"></form>
         <form action="/level" method="post" id="levelform"></form>
+
         <% for(var i = 0; i < artifacts.length; i++) {%>
+        <!-- ><script language ="JavaScript"> var radio = document.getElementById('radio' + '<%=artifacts[i]._id%>'); </script> <!-->
         <!--<li class="artifact"> -->
-        <button type="button" id= "button<%=artifacts[i]._id%>"
+        <button type="button" id= "button<%=artifacts[i]._id%>" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
                 <span><input type="checkbox" name="check" value="<%=
                                    artifacts[i]._id%>" autocomplete="off" form="deleteform"/></span>
 
                 <% for(var j = 0; j < artifacts[i].rarity; j++) {%>
                     <span>&#11088</span>
                 <% } %>
-                <span><input type="radio" id= "radio<%=i%>" name="pickArtifact"
-                                                            value="<%=
-                                                                    artifacts[i]._id%>"
-                                                            autocomplete="off"
-                                                            form="levelform"></span><br/>
-                <span><label for= "radio<%=i%>" <span><%= artifacts[i].name
+                <span><input type="radio" id= "radio<%=artifacts[i]._id%>" name="pickArtifact"
+                    value="<%=artifacts[i]._id%>" autocomplete="off" form="levelform"></span><br/>
+                <span><label for= "radio<%=artifacts[i]._id%>"> <span><%= artifacts[i].name
                              %></span><br/>
                          <span id = "level<%= artifacts[i]._id %>">+<%= artifacts[i].level %> <%= artifacts[i].slot %></span><br/>
 

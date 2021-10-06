@@ -1,0 +1,45 @@
+html {
+    background-color: #30345c;
+}
+body {
+    color: white
+}
+button[type="button"] {
+    background-color: ivory;
+    border-radius: 4px;
+    border: none;
+}
+.card {
+    position: fixed;
+    width: 300px;
+    top: 100px;
+    right: 50px;
+    background-color: ivory;
+}
+.card-image {
+    position: relative;
+    left: 150px;
+}
+#cardstats {
+    position: relative;
+    top: -50px;
+    left: -20px;
+}
+#lock {
+    position: relative;
+    left: 200px;
+}
+#card-main {
+    position: relative;
+    bottom: 100px;
+    left: -40px;
+}
+#footerbutton {
+    background: transparent;
+    border: none !important;
+    color: blue;
+    cursor: pointer;
+}
+#footerbutton:hover {
+    color: black
+}
