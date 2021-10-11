@@ -68,6 +68,23 @@ app.use(cookieSession({
     keys: ['key1, key2'],
     secret: 'secret2'
 }));
+import fs from 'fs';
+fs.rename('./subdomains/genshin/public/images/artifactSets/0', './subdomains/genshin/public/images/artifactSets/Adventurer\'s Bam', function(err) {
+    if ( err ) console.log('ERROR: ' + err);
+});
+fs.readdirSync('./subdomains/genshin/public/images/artifactSets/').forEach(file => {
+    console.log(file);
+    for(var p in numToStringSlots) {
+        fs.rename('./subdomains/genshin/public/images/artifactSets/'+file+'/'+ p + '.png', './subdomains/genshin/public/images/artifactSets/'+file+'/'+ numToStringSlots[p] + '.png', function(err) {
+            if ( err ) console.log('ERROR: ' + err);
+        });
+    }
+});
+for(var p in numToStringSets) {
+    fs.rename('./subdomains/genshin/public/images/artifactSets/' + p, './subdomains/genshin/public/images/artifactSets/' + numToStringSets[p], function(err) {
+        if ( err ) console.log('ERROR: ' + err);
+    });
+}
 */
 
 const databases = {};

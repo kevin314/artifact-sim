@@ -15,52 +15,71 @@ function rollArtifact(domainName) {
             res.json()
         .then(resArr => {
             const resultArr = convertArtifacts(resArr);
-            const levelbutton = document.getElementById('levelform');
             const resin = document.getElementById('resincount');
 
             if (resin.innerHTML == 160){
                 countDown();
             }
-
             resin.innerHTML = resin.innerHTML - 5
 
-            for(var num = 0; num < resultArr.length; num++){
-                const result = resultArr[num];
-                var rarityStr = "";
-                var subsStr = `<span id="subs${result['_id']}">`;
-
-                for(var i = 0; i < result['rarity']; i++){
-                    rarityStr += "<span>&#11088</span>"
-                }
-                for(var i = 0; i < result.subOrder.length; i++){
-                    subsStr += `${result.subOrder[i]}: ${Math.round(result[result.subOrder[i]]*10)/10}`+`<br/>`
-                }
-                const str =
-                    `<button type="button" id="button${result['_id']}"`+
-                    `<span><input type="checkbox" name="check" value="`+
-                    `${result['_id']}" autocomplete="off" form="deleteform"/></span>`+
-                    `${rarityStr}`+
-                    `<span><input type="radio" id= "radio${result['_id']}" name="pickArtifact"`+
-                    `value="`+
-                    `${result['_id']}" autocomplete="off"`+
-                    `form="levelform"></span><br/>`+
-                    `<span><label for= "radio${result['_id']}" <span> ${result.name}`+
-                    `</span><br/>`+
-                    `<span id = "level${result['_id']}">+${result.level} ${result.slot}</span><br/>`+
-                    `<span id = "xp${result['_id']}">${Math.abs((result.requiredCumulativeXP-result.cumulativeXP)-result.requiredXP)}/${result.requiredXP} XP</span><br/>`+
-                    `<span style="font-weight:bold">${result.main}</span><br/>`+
-                    `<span id = "main${result['_id']}">${Math.round(result['mainVal']*10)/10}</span><br/>`+
-                    `${subsStr} </span>`+
-                    `</button>`
-
-                levelbutton.insertAdjacentHTML('afterend', str)
-                //location.reload();
-                //window.location.href = "/";
-            }
+            addButtons(resultArr);
         })
         })
 }
 
+function test (obj) {
+    console.log("CLIENT TEST")
+    var radio = document.getElementById('radio' + obj._id);
+        if(radio.checked === false) {
+            radio.checked = true;
+            var cardheader = document.getElementById('cardheader');
+            cardheader.innerHTML = obj.name; 
+            document.getElementById('cardmain').innerHTML = obj.main;
+            document.getElementById('cardmainVal').innerHTML = obj.mainVal;
+            var statsStr = `<ul>`;
+            for(var i = 0; i < obj.subOrder.length; i++){
+                statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
+            }
+            statsStr += `</ul>`;
+            document.getElementById('cardstats').innerHTML = statsStr;
+        } 
+}
+function addButtons(resultArr) {
+    const levelbutton = document.getElementById('levelform');
+    for(var num = 0; num < resultArr.length; num++){
+        const result = resultArr[num];
+        var rarityStr = "";
+        var subsStr = `<span id="subs${result['_id']}">`;
+
+        for(var i = 0; i < result['rarity']; i++){
+            rarityStr += "&#11088"
+        }
+        for(var i = 0; i < result.subOrder.length; i++){
+            subsStr += `${result.subOrder[i]}: ${Math.round(result[result.subOrder[i]]*10)/10}`+`<br/>`
+        }
+        const str =
+            `<button type="button" id="button${result['_id']}" onclick='test(${JSON.stringify(result).replace(/'/g, '&#39')})'>`+
+            `<span><input type="checkbox" name="check" value="`+
+            `${result['_id']}" autocomplete="off" form="deleteform"/></span>`+
+            `${rarityStr}`+
+            `<span><input type="radio" id= "radio${result['_id']}" name="pickArtifact"`+
+            `value="`+
+            `${result['_id']}" autocomplete="off"`+
+            `form="levelform"></span><br/>`+
+            `<span><label for= "radio${result['_id']}" <span> ${result.name}`+
+            `</span><br/>`+
+            `<span id = "level${result['_id']}">+${result.level} ${result.slot}</span><br/>`+
+            `<span id = "xp${result['_id']}">${Math.abs((result.requiredCumulativeXP-result.cumulativeXP)-result.requiredXP)}/${result.requiredXP} XP</span><br/>`+
+            `<span style="font-weight:bold">${result.main}</span><br/>`+
+            `<span id = "main${result['_id']}">${Math.round(result['mainVal']*10)/10}</span><br/>`+
+            `${subsStr} </span>`+
+            `</button>`
+
+        levelbutton.insertAdjacentHTML('afterend', str)
+        //location.reload();
+        //window.location.href = "/";
+    }
+}
 function levelUpdatePage(obj){
     const id = obj['_id'];
     //console.log(id);
@@ -78,7 +97,6 @@ function levelUpdatePage(obj){
     main.innerHTML = Math.round(obj['mainVal']*10)/10;
     subs.innerHTML = subsStr;
 }
-
 
 function countDown(date) {
     const resintimer = document.getElementById('resintimer');
@@ -190,6 +208,18 @@ window.addEventListener('DOMContentLoaded', () => {
             })
     });
 
+    const guyun  = document.getElementById('roll-guyun')
+    guyun.addEventListener('click', () => {
+        rollArtifact('guyun');
+    })
+    const midsummer_courtyard  = document.getElementById('roll-midsummer')
+    midsummer_courtyard.addEventListener('click', () => {
+        rollArtifact('midsummer_courtyard');
+    })
+    const valley_remembrance  = document.getElementById('roll-valley')
+    valley_remembrance.addEventListener('click', () => {
+        rollArtifact('valley_remembrance');
+    })
     const hidden_palace = document.getElementById('roll-hidden_palace')
     hidden_palace.addEventListener('click', () => {
         rollArtifact('hidden_palace');
@@ -197,5 +227,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const vindagnyr  = document.getElementById('roll-vindagnyr')
     vindagnyr.addEventListener('click', () => {
         rollArtifact('vindagnyr');
+    })
+    const ridge_watch  = document.getElementById('roll-ridge_watch')
+    ridge_watch.addEventListener('click', () => {
+        rollArtifact('ridge_watch');
+    })
+    const momiji_court  = document.getElementById('roll-momiji_court')
+    momiji_court.addEventListener('click', () => {
+        rollArtifact('momiji_court');
+    })
+    const clear_pool  = document.getElementById('roll-clear_pool')
+    clear_pool.addEventListener('click', () => {
+        rollArtifact('clear_pool');
     })
 })

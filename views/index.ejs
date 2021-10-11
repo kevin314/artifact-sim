@@ -1,54 +1,121 @@
-
 <!DOCTYPE html>
 <html>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="index.css">
     
+    <!---
+        <nav id="navBar">
+            <aside class="menu" id="menu">
+                <p class="menu-label">
+                General
+                </p>
+                <ul class="menu-list">
+                <li><a>Dashboard</a></li>
+                <li><a>Customers</a></li>
+                </ul>
+                <p class="menu-label">
+                Administration
+                </p>
+                <ul class="menu-list">
+                <li><a>Team Settings</a></li>
+                <li><a>Manage Your Team</a>
+                    <ul>
+                    <li><a>Members</a></li>
+                    <li><a>Plugins</a></li>
+                    <li><a>Add a member</a></li>
+                    </ul>
+                </li>
+                <li><a>Invitations</a></li>
+                <li><a>Cloud Storage Environment Settings</a></li>
+                <li><a>Authentication</a></li>
+                </ul>
+                <p class="menu-label">
+                Transactions
+                </p>
+                <ul class="menu-list">
+                <li><a>Payments</a></li>
+                <li><a>Transfers</a></li>
+                <li><a>Balance</a></li>
+                </ul>
+            </aside>
+        </nav>
+    <--->
+
     <script type="module" src="client.js"></script>
+
+    <div id="entire">
     <head>
         <p>Welcome, <%= username %><p>
         <% if(loggedIn === true) { %>
             <button id="logout">Log Out</button>
         <% } else {  %>
-            <form action="/auth/discord" method="get" id="authdiscord"></form>
-            <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
-            <form action="/auth/google" method="get" id="authgoogle"></form>
-            <button type="submit" form="authgoogle" id="googlebutton">Sign in with
-                Google</button>
+            <div class="block">
+                <form action="/auth/discord" method="get" id="authdiscord"></form>
+                <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
+                <form action="/auth/google" method="get" id="authgoogle"></form>
+                <button type="submit" form="authgoogle" id="googlebutton">Sign in with
+                    Google</button>
+            </div>
         <% } %>
-
-        <title>Genshin Impact Artifact Sim</title>
+        <div class="block">
+            <title>Genshin Impact Artifact Sim</title>
+        </div>
     </head>
     <body>
-        <h1>Genshin Impact Artifact Sim</h1>
-        <p>Copium</p>
+        <div class="block">
+            <h1>Genshin Impact Artifact Sim</h1>
+        </div>
     </body>
 
-<!--
-<form action="/artifacts" method="POST">
-    <input type="text" placeholder="name" name="name">
-    <input type="text" placeholder="description" name="desc">
-    <button type="submit">Submit</button>
-</form>
--->
+    <div class="block">
+        <h2> Domains </h2>
+    </div>
+    <div class="block">
+        <button id="roll-guyun" name="domain" style="background-image: url('./images/domains/guyun1.png');">
+            <span class="domaintag">Domain of Guyun</span>
+        </button>
 
-    <h2> Domains </h2>
-    <h3> Hidden Palace of Zhou Formula </h3>
-    <button id="roll-hidden_palace">
-    <img src = "images/Item_Flower_of_Blaze.png" width= "100" height: "100"></button>
+        <button id ="roll-midsummer" name="domain" style="background-image: url('./images/domains/midsummer_courtyard1.png');">
+            <span class="domaintag">Midsummer Courtyard</span>
+        </button>
 
-    <h3> Peak of Vindagnyr </h3>
-    <button id ="roll-vindagnyr">
-    <img src = "images/Item_Snowswept_Memory.png" width= "100" height: "100"></button>
+        <button id="roll-valley" name="domain" style="background-image: url('./images/domains/valley_remembrance1.png');">
+            <span class="domaintag">Valley of Remembrance</span>
+        </button>
 
+        <button id="roll-hidden_palace" name="domain" style="background-image: url('./images/domains/hidden_palace1.png');">
+            <span class="domaintag">Hidden Palace of<br/>Zhou Formula </span>
+        </button>
+        
+        <button id ="roll-vindagnyr" name="domain" style="background-image: url('./images/domains/vindagnyr1.png');">
+            <span class="domaintag">Peak of Vindagnyr</span>
+        </button>
 
-    <h2> Artifacts </h2>
-    <span hidden id ="resindate"><%=resinDate%></span>
-    <span>Time to next resin: </span>
-    <span id ="resintimer"></span><br/>
+        <button id ="roll-ridge_watch" name="domain" style="background-image: url('./images/domains/ridge_watch1.png');">
+            <span class="domaintag">Ridge Watch</span>
+        </button>
 
-    <span>Resin: </span>
-    <span id ="resincount"><%= resin %></span><br/>
+        <button id="roll-momiji_court" name="domain" style="background-image: url('./images/domains/momiji_court1.png');">
+            <span class="domaintag">Momiji-Dyed Court</span>
+        </button>
+
+        <button id="roll-clear_pool" name="domain" style="background-image: url('./images/domains/clear_pool1.png');">
+            <span class="domaintag">Clear Pool and Mountain Cavern</span>
+        </button>
+    </div>
+
+    <div class="block">
+        <h2> Artifacts </h2>
+        <span hidden id ="resindate"><%=resinDate%></span>
+    </div>
+
+    <div class="block">
+        <span>Time to next resin: </span>
+        <span id ="resintimer"></span><br/>
+        <span>Resin: </span>
+        <span id ="resincount"><%= resin %></span><br/>
+    </div>
+
     <script language="JavaScript">
     function toggle(source) {
       checkboxes = document.getElementsByName('check');
@@ -57,23 +124,32 @@
         }
     }
     function test(obj){
-        //console.log(obj);
         var radio = document.getElementById('radio' + obj._id);
-        console.log(radio.checked);
         if(radio.checked === false) {
             radio.checked = true;
             var cardheader = document.getElementById('cardheader');
-            cardheader.innerHTML = obj.name; 
+            cardheader.innerHTML = obj.name;
+            console.log(`images/artifactSets/${obj['set']}/${obj['slot']}.png`)
+            document.getElementById('cardimage').src = `images/artifactSets/${obj['set']}/${obj['slot']}.png`
             document.getElementById('cardmain').innerHTML = obj.main;
             document.getElementById('cardmainVal').innerHTML = obj.mainVal;
+            var statsStr = `<ul>`;
+            for(var i = 0; i < obj.subOrder.length; i++){
+                statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
+            }
+            statsStr += `</ul>`;
+            document.getElementById('cardstats').innerHTML = statsStr;
         } 
     }
     </script>
 
-    <input type="checkbox" onClick="toggle(this)" /> Toggle All<br/>
-    <button type="submit" form="deleteform" id="deleteformid">Delete</button>
-    <button type="submit" form="levelform">Level</button>
+    <div class="block">
+        <input type="checkbox" onClick="toggle(this)" /> Toggle All<br/>
+        <button type="submit" form="deleteform" id="deleteformid">Delete</button>
+        <button type="submit" form="levelform">Level</button>
+    </div>
 
+    <!--< % var slotEnums = {"Flower of Life": 0, "Plume of Death": 1, "Sands of Eon": 2, "Goblet of Eonothem": 3, "Circlet of Logos": 4} %> -->
     <% if(artifacts[0]) { %>
     <div class="card">
         <header class="card-header">
@@ -83,7 +159,7 @@
         </header>
         <div class="card-image">
             <figure class="image is-128x128">
-            <img src="images/Item_Flower_of_Blaze.png" alt="Placeholder image">
+            <img id= "cardimage" src="images/artifactSets/<%=artifacts[0]['set']%>/<%=artifacts[0]['slot']%>.png" alt="Placeholder image">
             </figure>
         </div>
         <div class="card-content">
@@ -121,21 +197,22 @@
     </div>
     <% } %>
 
-    <ul class="artifacts">
+    <div class="artifacts">
         <!-- Loop through quotes -->
         <form action="/delete" method="post" id="deleteform"></form>
         <form action="/level" method="post" id="levelform"></form>
 
         <% for(var i = 0; i < artifacts.length; i++) {%>
-        <!-- ><script language ="JavaScript"> var radio = document.getElementById('radio' + '<%=artifacts[i]._id%>'); </script> <!-->
-        <!--<li class="artifact"> -->
-        <button type="button" id= "button<%=artifacts[i]._id%>" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
+        <button type="button" id= "button<%=artifacts[i]._id%>" name="artifactButton" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
                 <span><input type="checkbox" name="check" value="<%=
                                    artifacts[i]._id%>" autocomplete="off" form="deleteform"/></span>
 
+                <% var starStr = ""; %>
                 <% for(var j = 0; j < artifacts[i].rarity; j++) {%>
-                    <span>&#11088</span>
+                    <%starStr += "&#11088"%>
                 <% } %>
+                <%starStr = starStr.trim()%>
+                <%-starStr-%>
                 <span><input type="radio" id= "radio<%=artifacts[i]._id%>" name="pickArtifact"
                     value="<%=artifacts[i]._id%>" autocomplete="off" form="levelform"></span><br/>
                 <span><label for= "radio<%=artifacts[i]._id%>"> <span><%= artifacts[i].name
@@ -155,5 +232,6 @@
                 </button>
                 <!-- </li>-->
         <% } %>
-    </ul>
+    </div>
+</div>
 </html>
