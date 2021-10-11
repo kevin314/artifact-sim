@@ -42,7 +42,7 @@ const artifactSchema = {
     required: ["set", "slot", "rarity", "level", "cumulativeXP", "requiredCumulativeXP", "requiredXP", "main", "mainVal", "locked", "levelHistory", "subOrder"],
 }
 
-const enums = {
+const rarityEnums = {
     3: 'three',
     4: 'four',
     5: 'five',
@@ -175,72 +175,282 @@ const reqXP = {
 }
 
 const artifactSets = {
-    defenders_will: {
-        flower: "Guardian's Flower",
-        plume: "Guardian's Sigil",
-        sands: "Guardian's Clock",
-        goblet: "Guardian's Vessel",
-        circlet: "Guardian's Band",
+    'Adventurer': {
+        'Flower of Life': "Adventurer's Flower",
+        'Plume of Death': "Adventurer's Tail Feather",
+        'Sands of Eon': "Adventurer's Pocket Watch",
+        'Goblet of Eonothem': "Adventurer's Golden Goblet",
+        'Circlet of Logos': "Adventurer's Bandana",
     },
-    martial_artist: {
-        flower: "Martial Artist's Red Flower",
-        plume: "Martial Artist's Feather Accessory",
-        sands: "Martial Artist's Water Hourglass",
-        goblet: "Martial Artist's Wine Cup",
-        circlet: "Martial Artist's Bandana",
+    'Lucky Dog': {
+        'Flower of Life': "Lucky Dog's Clover",
+        'Plume of Death': "Lucky Dog's Eagle Feather",
+        'Sands of Eon': "Lucky Dog's Hourglass",
+        'Goblem of Eonothem': "Lucky Dog's Goblet",
+        'Circlet of Logos': "Lucky Dog's Silver Circlet",
     },
-    gambler: {
-        flower: "Gambler's Brooch",
-        plume: "Gambler's Feather Accessory",
-        sands: "Gambler's Pocket Watch",
-        goblet: "Gambler's Dice Cup",
-        circlet: "Gambler's Earrings",
+    'Traveling Doctor': {
+        'Flower of Life': "Traveling Doctor's Silver Lotus",
+        'Plume of Death': "Traveling Doctor's Owl Feather",
+        'Sands of Eon': "Traveling Doctor's Pocket Watch",
+        'Goblet of Eonothem': "Traveling Doctor's Medicine Pot",
+        'Circlet of Logos': "Traveling Doctor's Handkerchief",
     },
-    crimson_witch: {
-        flower: "Witch's Flower of Blaze",
-        plume: "Witch's Ever-Burning Plume",
-        sands: "Witch's End Time",
-        goblet: "Witch's Heart Flames",
-        circlet: "Witch's Scorching Hat",
+    'Resolution of Sojourner': {
+        'Flower of Life': "Heart of Comradeship",
+        'Plume of Death': "Feather of Homecoming",
+        'Sands of Eon': "Sundial of the Sojourner",
+        'Goblet of Eonothem': "Goblet of the Sojourner",
+        'Circlet of Logos': "Crown of Parting",
     },
-    lavawalker: {
-        flower: "Lavawalker's Resolution",
-        plume: "Lavawalker's Salvation",
-        sands: "Lavawalker's Torment",
-        goblet: "Lavawalker's Epiphany",
-        circlet: "Lavawalker's Wisdom",
+    'Tiny Miracle': {
+        'Flower of Life': "Tiny Miracle's Flower",
+        'Plume of Death': "Tiny Miracle's Feather",
+        'Sands of Eon': "Tiny Miracle's Goblet",
+        'Goblet of Eonothem': "Tiny Miracle's Goblet",
+        'Circlet of Logos': "Tiny Miracle's Earrings",
     },
-    icebreaker: {
-        flower: "Snowswept Memory",
-        plume: "Icebreaker's Resolve",
-        sands: "Frozen Homeland's Demise",
-        goblet: "Frost-Weaved Dignity",
-        circlet: "Broken Rime's Echo",
+    'Beserker': {
+        'Flower of Life': "Berserker's Rose",
+        'Plume of Death': "Berserker's Indigo Feather",
+        'Sands of Eon': "Berserker's Timepiece",
+        'Goblet of Eonothem': "Berserker's Bone Goblet",
+        'Circlet of Logos': "Berserker's Battle Mask",
     },
-    heart_of_depth: {
-        flower: "Gilded Corsage",
-        plume: "Gust of Nostalgia",
-        sands: "Copper Compass",
-        goblet: "Goblet of Thundering Deep",
-        circlet: "Wine-Stained Tricorne",
+    'Instructor': {
+        'Flower of Life': "Instructor's Brooch",
+        'Plume of Death': "Instructor's Feather Accessory",
+        'Sands of Eon': "Instructor's Pocket Watch",
+        'Goblet of Eonothem': "Instructor's Tea Cup",
+        'Circlet of Logos': "Instructor's Cap",
+    },
+    'The Exile': {
+        'Flower of Life': "Exile's Flower",
+        'Plume of Death': "Exile's Feather",
+        'Sands of Eon': "Exile's Pocket Watch",
+        'Goblet of Eonothem': "Exile's Goblet",
+        'Circlet of Logos': "Exile's Circlet",
+    },
+    'Defender\'s Will': {
+        'Flower of Life': "Guardian's Flower",
+        'Plume of Death': "Guardian's Sigil",
+        'Sands of Eon': "Guardian's Clock",
+        'Goblet of Eonothem': "Guardian's Vessel",
+        'Circlet of Logos': "Guardian's Band",
+    },
+    'Brave Heart': {
+        'Flower of Life': "Medal of the Brave",
+        'Plume of Death': "Prospect of the Brave",
+        'Sands of Eon': "Fortitude of the Brave",
+        'Goblet of Eonothem': "Outset of the Brave",
+        'Circlet of Logos': "Crown of the Brave",
+    },
+    'Martial Artist': {
+        'Flower of Life': "Martial Artist's Red Flower",
+        'Plume of Death': "Martial Artist's Feather Accessory",
+        'Sands of Eon': "Martial Artist's Water Hourglass",
+        'Goblet of Eonothem': "Martial Artist's Wine Cup",
+        'Circlet of Logos': "Martial Artist's Bandana",
+    },
+    'Gambler': {
+        'Flower of Life': "Gambler's Brooch",
+        'Plume of Death': "Gambler's Feather Accessory",
+        'Sands of Eon': "Gambler's Pocket Watch",
+        'Goblet of Eonothem': "Gambler's Dice Cup",
+        'Circlet of Logos': "Gambler's Earrings",
+    },
+    'Scholar': {
+        'Flower of Life': "Scholar's Bookmark",
+        'Plume of Death': "Scholar's Quill Pen",
+        'Sands of Eon': "Scholar's Clock",
+        'Goblet of Eonothem': "Scholar's Ink Cup",
+        'Circlet of Logos': "Scholar's Lens",
+    },
+    'Prayers for Illumination': {
+        'Circlet of Logos': "Tiara of Flame",
+    },
+    'Prayers for Destiny': {
+        'Circlet of Logos': "Tiara of Torrents",
+    },
+    'Prayers for Wisdom': {
+        'Circlet of Logos': "Tiara of Thunder",
+    },
+    'Prayers to Springtime': {
+        'Circlet of Logos': "Tiara of Frost",
+    },
+    'Gladiator\'s Finale': {
+        'Flower of Life': "Gladiator's Nostalgia",
+        'Plume of Death': "Gladiator's Destiny",
+        'Sands of Eon': "Gladiator's Longing",
+        'Goblet of Eonothem': "Gladiator's Intoxication",
+        'Circlet of Logos': "Gladiator's Triumphus",
+    },
+    'Wanderer\'s Troupe': {
+        'Flower of Life': "Troupe's Dawnlight",
+        'Plume of Death': "Bard's Arrow Feather",
+        'Sands of Eon': "Concert's Final Hour",
+        'Goblet of Eonothem': "Wanderer's String Kettle",
+        'Circlet of Logos': "Conductor's Top Hat",
+    },
+    'Thundersoother': {
+        'Flower of Life': "Thundersoother's Heart",
+        'Plume of Death': "Thundersoother's Plume",
+        'Sands of Eon': "Hour of Soothing Thunder",
+        'Goblet of Eonothem': "Thundersoother's Goblet",
+        'Circlet of Logos': "Thundersoother's Diadem",
+    },
+    'Thundering Fury': {
+        'Flower of Life': "Thunderbird's Mercy",
+        'Plume of Death': "Survivor of Catastrophe",
+        'Sands of Eon': "Hourglass of Thunder",
+        'Goblet of Eonothem': "Omen of Thunderstorm",
+        'Circlet of Logos': "Thunder Summoner's Crown",
+    },
+    'Maiden Beloved': {
+        'Flower of Life': "Maiden's Distant Love",
+        'Plume of Death': "Maiden's Heart-stricken Infatuation",
+        'Sands of Eon': "Maiden's Passing Youth",
+        'Goblet of Eonothem': "Maiden's Fleeting Leisure",
+        'Circlet of Logos': "Maiden's Fading Beauty",
+    },
+    'Viridescent Venerer': {
+        'Flower of Life': "In Remembrance of Viridescent Fields",
+        'Plume of Death': "Viridescent Arrow Feather",
+        'Sands of Eon': "Viridescent Venerer's Determination",
+        'Goblet of Eonothem': "Viridescent Venerer's Vessel",
+        'Circlet of Logos': "Viridescent Venerer's Diadem",
+    },
+    'Crimson Witch of Flames': {
+        'Flower of Life': "Witch's Flower of Blaze",
+        'Plume of Death': "Witch's Ever-Burning Plume",
+        'Sands of Eon': "Witch's End Time",
+        'Goblet of Eonothem': "Witch's Heart Flames",
+        'Circlet of Logos': "Witch's Scorching Hat",
+    },
+    'Lavawalker': {
+        'Flower of Life': "Lavawalker's Resolution",
+        'Plume of Death': "Lavawalker's Salvation",
+        'Sands of Eon': "Lavawalker's Torment",
+        'Goblet of Eonothem': "Lavawalker's Epiphany",
+        'Circlet of Logos': "Lavawalker's Wisdom",
+    },
+    'Noblesse Oblige': {
+        'Flower of Life': "Royal Flora",
+        'Plume of Death': "Royal Plume",
+        'Sands of Eon': "Royal Pocket Watch",
+        'Goblet of Eonothem': "Royal Silver Urn",
+        'Circlet of Logos': "Royal Masque",
+    },
+    'Bloodstained Chivalry': {
+        'Flower of Life': "Bloodstained Flower of Iron",
+        'Plume of Death': "Bloodstained Black Plume",
+        'Sands of Eon': "Bloodstained Final Hour",
+        'Goblet of Eonothem': "Bloodstained Chevalier's Goblet",
+        'Circlet of Logos': "Bloodstained Iron Mask",
+    },
+    'Archaic Petra': {
+        'Flower of Life': "Flower of Creviced Cliff",
+        'Plume of Death': "Feather of Jagged Peaks",
+        'Sands of Eon': "Sundial of Enduring Jade",
+        'Goblet of Eonothem': "Goblet of Chiseled Crag",
+        'Circlet of Logos': "Mask of Solitude Basalt",
+    },
+    'Retracing Bolide': {
+        'Flower of Life': "Summer Night's Bloom",
+        'Plume of Death': "Summer Night's Finale",
+        'Sands of Eon': "Summer Night's Moment",
+        'Goblet of Eonothem': "Summer Night's Waterballoon",
+        'Circlet of Logos': "Summer Night's Mask",
+    },
+    'Blizzard Strayer': {
+        'Flower of Life': "Snowswept Memory",
+        'Plume of Death': "Icebreaker's Resolve",
+        'Sands of Eon': "Frozen Homeland's Demise",
+        'Goblet of Eonothem': "Frost-Weaved Dignity",
+        'Circlet of Logos': "Broken Rime's Echo",
+    },
+    'Heart of Depth': {
+        'Flower of Life': "Gilded Corsage",
+        'Plume of Death': "Gust of Nostalgia",
+        'Sands of Eon': "Copper Compass",
+        'Goblet of Eonothem': "Goblet of Thundering Deep",
+        'Circlet of Logos': "Wine-Stained Tricorne",
+    },
+    'Tenacity of the Millelith': {
+        'Flower of Life': "Flower of Accolades",
+        'Plume of Death': "Ceremonial War-Plume",
+        'Sands of Eon': "Orichalceous Time-Dial",
+        'Goblet of Eonothem': "Noble's Pledging Vessel",
+        'Circlet of Logos': "General's Ancient Helm",
+    },
+    'Pale Flame': {
+        'Flower of Life': "Stainless Bloom",
+        'Plume of Death': "Wise Doctor's Pinion",
+        'Sands of Eon': "Moment of Cessation",
+        'Goblet of Eonothem': "Surpassing Cup",
+        'Circlet of Logos': "Mocking Mask",
+    },
+    'Emblem of Severed Fate': {
+        'Flower of Life': "Magnificent Tsuba",
+        'Plume of Death': "Sundered Feather",
+        'Sands of Eon': "Storm Cage",
+        'Goblet of Eonothem': "Scarlet Vessel",
+        'Circlet of Logos': "Ornate Kabuto",
+    },
+    'Shimenawa\'s Reminiscence': {
+        'Flower of Life': "Entangling Bloom",
+        'Plume of Death': "Shaft of Remembrance",
+        'Sands of Eon': "Morning Dew's Moment",
+        'Goblet of Eonothem': "Hopeful Heart",
+        'Circlet of Logos': "Capricious Visage",
     },
 }
 
 const artifacts = {
+    guyun: {
+        'five': ['Archaic Petra', 'Retracing Bolide'],
+        'four': ['Archaic Petra', 'Retracing Bolide', 'Brave Heart'],
+        'three': ['Lucky Dog', 'Brave Heart'],
+    },
+    midsummer_courtyard: {
+        'five': ['Thundering Fury', 'Thundersoother'],
+        'four': ['Thundering Fury', 'Thundersoother', 'Resolution of Sojourner'],
+        'three': ['Adventurer', 'Resolution of Sojourner'],
+    },
+    valley_remembrance: {
+        'five': ['Viridescent Venerer', 'Maiden Beloved'],
+        'four': ['Viridescent Venerer', 'Maiden Beloved', 'Tiny Miracle'],
+        'three': ['Tiny Miracle', 'Traveling Doctor'],
+    },
     hidden_palace: {
-        'five': ['crimson_witch', 'lavawalker'],
-        'four': ['crimson_witch', 'lavawalker', 'defenders_will', 'martial_artist'],
-        'three': ['defenders_will', 'martial_artist'],
+        'five': ['Crimson Witch of Flames', 'Lavawalker'],
+        'four': ['Crimson Witch of Flames', 'Lavawalker', 'Defender\'s Will', 'Martial Artist'],
+        'three': ['Defender\'s Will', 'Martial Artist'],
     },
     vindagnyr: {
-        'five': ['icebreaker', 'heart_of_depth'],
-        'four': ['icebreaker', 'heart_of_depth', 'defenders_will', 'gambler'],
-        'three': ['defenders_will', 'gambler'],
+        'five': ['Blizzard Strayer', 'Heart of Depth'],
+        'four': ['Blizzard Strayer', 'Heart of Depth', 'Defender\'s Will', 'Gambler'],
+        'three': ['Defender\'s Will', 'Gambler'],
+    },
+    ridge_watch: {
+        'five': ['Tenacity of the Millelith', 'Pale Flame'],
+        'four': ['Tenacity of the Millelith', 'Pale Flame', 'Brave Heart', 'Martial Artist'],
+        'three': ['Brave Heart', 'Martial Artist'],
+    },
+    momiji_court: {
+        'five': ['Shimenawa\'s Reminiscence', 'Emblem of Severed Fate'],
+        'four': ['Shimenawa\'s Reminiscence', 'Emblem of Severed Fate', 'Resolution of Sojourner', 'Tiny Miracle'],
+        'three': ['Resolution of Sojourner', 'Tiny Miracle']
+    },
+    clear_pool: {
+        'five': ['Bloodstained Chivalry', 'Noblesse Oblige'],
+        'four': ['Bloodstained Chivalry', 'Noblesse Oblige', 'Gambler', 'Scholar'],
+        'three': ['Gambler', 'Scholar'],
     },
 }
 
 const main_percentages = {
-    flower: {
+    'Flower of Life': {
         'HP': {
             chance: 1,
             stats: {
@@ -250,7 +460,7 @@ const main_percentages = {
             }
         }
     },
-    plume: {
+    'Plume of Death': {
         'ATK': {
             chance: 1,
             stats: {
@@ -260,7 +470,7 @@ const main_percentages = {
             }
         }
     },
-    sands: {
+    'Sands of Eon': {
         'HP%': {
             chance: 0.2668,
             stats: {
@@ -302,7 +512,7 @@ const main_percentages = {
             }
         }
     },
-    goblet: {
+    'Goblet of Eonothem': {
         'HP%': {
             chance: 0.2668,
             stats: {
@@ -392,7 +602,7 @@ const main_percentages = {
             }
         },
     },
-    circlet: {
+    'Circlet of Logos': {
         'HP%': {
             chance: 0.2668,
             stats: {
@@ -551,53 +761,54 @@ const numStats_dist = {
 }
 
 const stringToNumSets = {
-    'adventurer': 0,
-    'lucky_dog': 1,
-    'doctor': 2,
-    'sojournor': 3,
-    'miracle': 4,
-    'berserker': 5,
-    'instructor': 6,
-    'exile': 7,
-    'defenders_will': 8,
-    'brave_heart': 9,
-    'martial_artist': 10,
-    'gambler': 11,
-    'scholar': 12,
-    'illumination': 13,
-    'destiny': 14,
-    'wisdom': 15,
-    'springtime': 16,
-    'gladiator': 17,
-    'wanderers_troupe': 18,
-    'thundersoother': 19,
-    'thundering_fury': 20,
-    'maiden_beloved': 21,
-    'viridescent_venerer': 22,
-    'crimson_witch': 23,
-    'lavawalker': 24,
-    'noblesse_oblige': 25,
-    'bloodstained_chivalry': 26,
-    'archaic_petra': 27,
-    'retracing_bolide': 28,
-    'icebreaker': 29,
-    'heart_of_depth': 30,
-    'tenacity_millelith': 31,
-    'pale_flame': 32,
-    'severed_fate': 33,
-    'shimenawa': 34,
+    'Adventurer': 0,
+    'Lucky Dog': 1,
+    'Traveling Doctor': 2,
+    'Resolution of Sojourner': 3,
+    'Tiny Miracle': 4,
+    'Berserker': 5,
+    'Instructor': 6,
+    'The Exile': 7,
+    'Defender\'s Will': 8,
+    'Brave Heart': 9,
+    'Martial Artist': 10,
+    'Gambler': 11,
+    'Scholar': 12,
+    'Prayer\'s for Illumination': 13,
+    'Prayer\'s for Destiny': 14,
+    'Prayer\'s for Wisdom': 15,
+    'Prayer\'s to Springtime': 16,
+    'Gladiator\'s Finale': 17,
+    'Wanderer\'s Troupe': 18,
+    'Thundersoother': 19,
+    'Thundering Fury': 20,
+    'Maiden Beloved': 21,
+    'Viridescent Venerer': 22,
+    'Crimson Witch of Flames': 23,
+    'Lavawalker': 24,
+    'Noblesse Oblige': 25,
+    'Bloodstained Chivalry': 26,
+    'Archaic Petra': 27,
+    'Retracing Bolide': 28,
+    'Blizzard Strayer': 29,
+    'Heart of Depth': 30,
+    'Tenacity of the Millelith': 31,
+    'Pale Flame': 32,
+    'Emblem of Severed Fate': 33,
+    'Shimenawa\'s Reminiscence': 34,
 }
+
 var numToStringSets = {}
 for(const key in stringToNumSets){
     numToStringSets[stringToNumSets[key]] = key;
 }
 
 const stringToNumSlots = {
-    'flower': 0,
-    'plume': 1,
-    'sands': 2,
-    'goblet': 3,
-    'circlet': 4,
+    'Flower of Life': 0,
+    'Plume of Death': 1,
+    'Sands of Eon': 2,
+    'Goblet of Eonothem': 3,
+    'Circlet of Logos': 4,
 }
 
 var numToStringSlots = {}
@@ -643,8 +854,14 @@ function convertArtifacts(objs) {
     objs.forEach(element => {
         var clientObj = {};
         clientObj['_id'] = element['_id'];
+        clientObj['set'] = numToStringSets[element['set']];
         clientObj['slot'] = numToStringSlots[element.slot];
-        //console.log(numToStringSets[element.set]);
+        /*
+        console.log(element.set)
+        console.log(numToStringSets[element.set]);
+        console.log(element.slot)
+        console.log(numToStringSlots[element.slot]);
+        */
         clientObj['name'] = artifactSets[numToStringSets[element.set]][clientObj['slot']];
         clientObj['subOrder'] = decodeSubstatOrder(element.subOrder, true);
 
@@ -799,7 +1016,8 @@ function decodeSubstatOrder(value, convert){
 }
 
 function rollSingle(domainName, rarity){
-    var possibleSetNames = artifacts[domainName][enums[rarity]];
+    
+    var possibleSetNames = artifacts[domainName][rarityEnums[rarity]];
     var pickedSetName = possibleSetNames[getRandInt(possibleSetNames.length)];
     var pickedSet = artifactSets[pickedSetName];
 
@@ -809,7 +1027,15 @@ function rollSingle(domainName, rarity){
     var randSlot = slotArray[setIdx];
 
     var mainstat = weightedRand(main_percentages[randSlot], []);
-    var initialMainVal = main_percentages[randSlot][mainstat]['stats'][enums[rarity]]['0'];
+    var initialMainVal = main_percentages[randSlot][mainstat]['stats'][rarityEnums[rarity]]['0'];
+    /*
+    console.log('-----------------------')
+    console.log('domainName: ' + domainName);
+    console.log('pickedSetName: ' + pickedSetName);
+    console.log('rarity: ' + rarity);
+    console.log('randSlot: ' + randSlot);
+    console.log('-----------------------')
+    */
 
     var initialArtifact = {
         //name: pickedSet[randSlot],
@@ -829,11 +1055,11 @@ function rollSingle(domainName, rarity){
     //console.log(JSON.stringify(initialArtifact));
 
     //var numSubs = parseInt(weightedRand({'3': {chance: 0.75}, '4': {chance: 0.25}}, []));
-    var numSubs = parseInt(weightedRand(numStats_dist[enums[rarity]], []));
+    var numSubs = parseInt(weightedRand(numStats_dist[rarityEnums[rarity]], []));
     var subStats = [];
     for(var i = 0; i < numSubs; i++){
         subStats[i] = weightedRand(sub_percentages, [mainstat].concat(subStats));
-        var statRoll = sub_percentages[subStats[i]]['stats'][enums[rarity]][getRandInt(4)];
+        var statRoll = sub_percentages[subStats[i]]['stats'][rarityEnums[rarity]][getRandInt(4)];
         //HP: 123, => 0: 123
         initialArtifact[stringToNumStats[subStats[i]]] = statRoll;
         /*
@@ -903,7 +1129,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
 
     var numSubs = obj['subOrder'].length;
 
-    var mainPercentages = main_percentages[obj['slot']][obj['main']]['stats'][enums[obj['rarity']]];
+    var mainPercentages = main_percentages[obj['slot']][obj['main']]['stats'][rarityEnums[obj['rarity']]];
     var mainKeys = Object.keys(mainPercentages);
     var mainInc = (mainPercentages[mainKeys[1]] - mainPercentages[mainKeys[0]])/ mainKeys[1];
 
@@ -914,7 +1140,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
             //updateJson['sub'+randNum+'Val'] = sub_percentages[obj['sub'+randNum]]['stats']['five'][Math.floor(Math.random()*4)];
             var subStats = obj.subOrder;
             var subName = subStats[randNum];
-            var increm  = sub_percentages[subName]['stats'][enums[obj['rarity']]][Math.floor(Math.random()*4)];
+            var increm  = sub_percentages[subName]['stats'][rarityEnums[obj['rarity']]][Math.floor(Math.random()*4)];
 
             var levelHistory = obj['levelHistory'];
             levelHistory[level+1] = {[stringToNumStats[subName]]: increm};
@@ -948,7 +1174,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
             // Decode substat order
             var subStats = obj.subOrder;
             var subStat = weightedRand(sub_percentages, [obj['main']].concat(subStats));
-            var statRoll = sub_percentages[subStat]['stats'][enums[obj['rarity']]][Math.floor(Math.random()*4)];
+            var statRoll = sub_percentages[subStat]['stats'][rarityEnums[obj['rarity']]][Math.floor(Math.random()*4)];
 
             subStats = subStats.concat(subStat);
             var orderEncoded = encodeSubstatOrder(subStats, true);
