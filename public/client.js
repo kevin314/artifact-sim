@@ -43,7 +43,7 @@ function test (obj) {
             statsStr += `</ul>`;
             document.getElementById('cardstats').innerHTML = statsStr;
         } 
-}
+}   
 function addButtons(resultArr) {
     const levelbutton = document.getElementById('levelform');
     for(var num = 0; num < resultArr.length; num++){
