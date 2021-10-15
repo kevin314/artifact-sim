@@ -24,7 +24,10 @@ html:after {
 }
 
 #entire {
-    margin-left: 215px;     
+    margin-left: 0px;     
+}
+.card-artifacts{
+    display:flex;
 }
 #menu{
     position: absolute;
@@ -35,6 +38,7 @@ body {
     color: white
 }
 button[type="button"] {
+    align-self: flex-start;
     background-color:rgb(232, 241, 255);
     color: #4a4a4a;
     border-radius: 4px;
@@ -42,10 +46,10 @@ button[type="button"] {
     margin: 5px;
 }
 .card {
-    position: fixed;
-    width: 300px;
-    top: 100px;
-    right: 50px;
+    align-self: flex-start;
+    margin-right: 25px;
+    order: 2;
+    width: 350px;
     background-color:snow;
 }
 .card-image {
@@ -95,5 +99,10 @@ button[type="button"] {
     color: white;
     
     text-shadow: 1px 0 0 black, -1px 0 0 black, 0 1px 0 black, 0 -1px 0 black, 1px 1px black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
+}
+.artifacts{
+    align-self: flex-start;
+    width: 1200px;
+    order: 0;
 }
 
