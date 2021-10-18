@@ -43,20 +43,20 @@
 
     <script type="module" src="client.js"></script>
 
-    <div id="entire">
+    <p>Welcome, <%= username %><p>
+        <% if(loggedIn === true) { %>
+            <button id="logout">Log Out</button>
+        <% } else {  %>
+            <div class="block">
+                <form action="/auth/discord" method="get" id="authdiscord"></form>
+                <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
+                <form action="/auth/google" method="get" id="authgoogle"></form>
+                <button type="submit" form="authgoogle" id="googlebutton">Sign in with
+                    Google</button>
+            </div>
+        <% } %>
+
         <head>
-            <p>Welcome, <%= username %><p>
-            <% if(loggedIn === true) { %>
-                <button id="logout">Log Out</button>
-            <% } else {  %>
-                <div class="block">
-                    <form action="/auth/discord" method="get" id="authdiscord"></form>
-                    <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
-                    <form action="/auth/google" method="get" id="authgoogle"></form>
-                    <button type="submit" form="authgoogle" id="googlebutton">Sign in with
-                        Google</button>
-                </div>
-            <% } %>
             <div class="block">
                 <title>Genshin Impact Artifact Sim</title>
             </div>
@@ -67,6 +67,7 @@
             </div>
         </body>
 
+    <div id='domainFlex'>
         <div class="block">
             <h2> Domains </h2>
         </div>
@@ -103,18 +104,20 @@
                 <span class="domaintag">Clear Pool and Mountain Cavern</span>
             </button>
         </div>
+    </div>
+    <div id="entire">
+        <div id="resininfo">
+            <div class="block">
+                <span hidden id ="resindate"><%=resinDate%></span>
+            </div>
 
-        <div class="block">
-            <h2> Artifacts </h2>
-            <span hidden id ="resindate"><%=resinDate%></span>
-        </div>
-
-        <div class="block">
-            <span>Time to next resin: </span>
-            <span id ="resintimer"></span><br/>
-            <span>Resin: </span>
-            <span id ="resincount"><%= resin %></span><br/>
-        </div>
+            <div class="block" id='resinTC'>
+                <span>Time to next resin: </span>
+                <span id ="resintimer"></span><br/>
+                <span>Resin: </span>
+                <span id ="resincount"><%= resin %></span><br/>
+            </div>
+        
 
         <script language="JavaScript">
         function toggle(source) {
@@ -132,13 +135,23 @@
                 console.log(`images/artifactSets/${obj['set']}/${obj['slot']}.png`)
                 document.getElementById('cardimage').src = `images/artifactSets/${obj['set']}/${obj['slot']}.png`
                 document.getElementById('cardmain').innerHTML = obj.main;
-                document.getElementById('cardmainVal').innerHTML = obj.mainVal;
+                document.getElementById('cardmainVal').innerHTML = Math.round(obj.mainVal*10)/10;
                 var statsStr = `<ul>`;
+                
+                var cardstats = document.getElementById('cardstats');
+                // Remove all children of the unordered list of sub-stats
+                cardstats.children[0].textContent = '';
                 for(var i = 0; i < obj.subOrder.length; i++){
-                    statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
+                    var li = document.createElement('li');
+                    li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
+                    cardstats.children[0].appendChild(li);
+                    console.log(li);
+                    console.log(li.childNodes);
+                    console.log('------------------------------')
+                    //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
                 }
-                statsStr += `</ul>`;
-                document.getElementById('cardstats').innerHTML = statsStr;
+                //statsStr += `</ul>`;
+                //document.getElementById('cardstats').innerHTML = statsStr;
             } 
         }
         </script>
@@ -148,92 +161,92 @@
             <button type="submit" form="deleteform" id="deleteformid">Delete</button>
             <button type="submit" form="levelform">Level</button>
         </div>
+    </div>
 
-        <div class= "card-artifacts">
-        <!--< % var slotEnums = {"Flower of Life": 0, "Plume of Death": 1, "Sands of Eon": 2, "Goblet of Eonothem": 3, "Circlet of Logos": 4} %> -->
-        <% if(artifacts[0]) { %>
-        <div class="card">
-            <header class="card-header">
-                <p class="card-header-title is-centered" id= cardheader>
-                <%= artifacts[0].name %>
-                </p>
-            </header>
-            <div class="card-image">
-                <figure class="image is-128x128">
-                <img id= "cardimage" src="images/artifactSets/<%=artifacts[0]['set']%>/<%=artifacts[0]['slot']%>.png" alt="Placeholder image">
-                </figure>
-            </div>
-            <div class="card-content">
-                <div class="media">
-                    <div class="media-right" id="lock">
-                        <figure class="image is-24x24">
-                        <img src="images/lock.png" alt="Placeholder image">
-                        </figure>
-                    </div>
-                    <div class="media-content" id="card-main">
-                        <p class="subtitle is-6" id="cardmain"> <%- artifacts[0].main %></p>
-                        <p class="title is-4" id="cardmainVal"><%- artifacts[0].mainVal %></p>
-                    </div>
+    <!--< % var slotEnums = {"Flower of Life": 0, "Plume of Death": 1, "Sands of Eon": 2, "Goblet of Eonothem": 3, "Circlet of Logos": 4} %> -->
+
+    <div class="card">
+        <header class="card-header">
+            <p class="card-header-title is-centered" id= cardheader>
+            <%= artifacts[0] && artifacts[0].name %>
+            </p>
+        </header>
+        <div class="card-image">
+            <figure class="image is-128x128">
+            <img id= "cardimage" src="images/artifactSets/<%= artifacts[0] && artifacts[0]['set']%>/<%= artifacts[0] && artifacts[0]['slot']%>.png" alt="Placeholder image">
+            </figure>
+        </div>
+        <div class="card-content">
+            <div class="media">
+                <div class="media-right" id="lock">
+                    <figure class="image is-24x24">
+                    <img src="images/lock.png" alt="Placeholder image">
+                    </figure>
                 </div>
+                <div class="media-content" id="card-main">
+                    <p class="subtitle is-6" id="cardmain"> <%- artifacts[0] && artifacts[0].main %></p>
+                    <p class="title is-4" id="cardmainVal"><%- artifacts[0] && Math.round(artifacts[0].mainVal*10)/10 %></p>
+                </div>
+            </div>
 
-                <div class="content" id="cardstats">
-                    <ul>
+            <div class="content" id="cardstats">
+                <ul>
+                    <% if (artifacts[0]) { %>
                         <% for(var j = 0; j < artifacts[0].subOrder.length; j++) {%>
-                            <li><%= artifacts[0].subOrder[j] %>+<%=Math.round(artifacts[0][artifacts[0].subOrder[j]]*10)/10 %><br/></li>
+                            <li id="li<%=j%>"><%= artifacts[0].subOrder[j] %>+<%=Math.round(artifacts[0][artifacts[0].subOrder[j]]*10)/10 %><br/></li>
                         <% } %>
-                    </ul>
-                </div>
-
-                <div class="content">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Phasellus nec iaculis mauris. <a>@bulmaio</a>.
-                    <a href="#">#css</a> <a href="#">#responsive</a>
-                    <br>
-                    <time datetime="2016-1-1">11:09 PM - 1 Jan 2016</time>
-                </div>
+                    <% } %>
+                </ul>
             </div>
-            <footer class="card-footer">
-                <button type="button" id="footerbutton" class="card-footer-item">Details</button>
-            </footer>
+
+            <div class="content">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Phasellus nec iaculis mauris. <a>@bulmaio</a>.
+                <a href="#">#css</a> <a href="#">#responsive</a>
+                <br>
+                <time datetime="2016-1-1">11:09 PM - 1 Jan 2016</time>
+            </div>
         </div>
+        <footer class="card-footer">
+            <button type="button" id="footerbutton" class="card-footer-item">Details</button>
+        </footer>
+    </div>
+
+    <div class="artifacts">
+        <!-- Loop through quotes -->
+        <form action="/delete" method="post" id="deleteform"></form>
+        <form action="/level" method="post" id="levelform"></form>
+
+        <% for(var i = 0; i < artifacts.length; i++) {%>
+        <button type="button" id= "button<%=artifacts[i]._id%>" name="artifactButton" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
+                <span><input type="checkbox" name="check" value="<%=
+                                artifacts[i]._id%>" autocomplete="off" form="deleteform"/></span>
+
+                <% var starStr = ""; %>
+                <% for(var j = 0; j < artifacts[i].rarity; j++) {%>
+                    <%starStr += "&#11088"%>
+                <% } %>
+                <%starStr = starStr.trim()%>
+                <%-starStr-%>
+                <span><input type="radio" id= "radio<%=artifacts[i]._id%>" name="pickArtifact"
+                    value="<%=artifacts[i]._id%>" autocomplete="off" form="levelform"></span><br/>
+                <span><label for= "radio<%=artifacts[i]._id%>"> <span><%= artifacts[i].name
+                            %></span><br/>
+                        <span id = "level<%= artifacts[i]._id %>">+<%= artifacts[i].level %> <%= artifacts[i].slot %></span><br/>
+
+                <span id = "xp<%= artifacts[i]._id %>"><%=Math.abs((artifacts[i].requiredCumulativeXP-artifacts[i].cumulativeXP)-artifacts[i].requiredXP) %>/<%= artifacts[i].requiredXP %> XP</span><br/>
+                <span style="font-weight:bold"><%= artifacts[i].main %></span><br/>
+                <span id =
+                    "main<%=artifacts[i]._id%>"><%=Math.round(artifacts[i].mainVal*10)/10 %></span><br/>
+                <span id = "subs<%=artifacts[i]._id%>">
+
+                <% for(var j = 0; j < artifacts[i].subOrder.length; j++) {%>
+                    <%= artifacts[i].subOrder[j] %>: <%=Math.round(artifacts[i][artifacts[i].subOrder[j]]*10)/10 %><br/>
+                <% } %>
+                </span>
+                </button>
+                <!-- </li>-->
         <% } %>
-
-        <div class="artifacts">
-            <!-- Loop through quotes -->
-            <form action="/delete" method="post" id="deleteform"></form>
-            <form action="/level" method="post" id="levelform"></form>
-
-            <% for(var i = 0; i < artifacts.length; i++) {%>
-            <button type="button" id= "button<%=artifacts[i]._id%>" name="artifactButton" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
-                    <span><input type="checkbox" name="check" value="<%=
-                                    artifacts[i]._id%>" autocomplete="off" form="deleteform"/></span>
-
-                    <% var starStr = ""; %>
-                    <% for(var j = 0; j < artifacts[i].rarity; j++) {%>
-                        <%starStr += "&#11088"%>
-                    <% } %>
-                    <%starStr = starStr.trim()%>
-                    <%-starStr-%>
-                    <span><input type="radio" id= "radio<%=artifacts[i]._id%>" name="pickArtifact"
-                        value="<%=artifacts[i]._id%>" autocomplete="off" form="levelform"></span><br/>
-                    <span><label for= "radio<%=artifacts[i]._id%>"> <span><%= artifacts[i].name
-                                %></span><br/>
-                            <span id = "level<%= artifacts[i]._id %>">+<%= artifacts[i].level %> <%= artifacts[i].slot %></span><br/>
-
-                    <span id = "xp<%= artifacts[i]._id %>"><%=Math.abs((artifacts[i].requiredCumulativeXP-artifacts[i].cumulativeXP)-artifacts[i].requiredXP) %>/<%= artifacts[i].requiredXP %> XP</span><br/>
-                    <span style="font-weight:bold"><%= artifacts[i].main %></span><br/>
-                    <span id =
-                        "main<%=artifacts[i]._id%>"><%=Math.round(artifacts[i].mainVal*10)/10 %></span><br/>
-                    <span id = "subs<%=artifacts[i]._id%>">
-
-                    <% for(var j = 0; j < artifacts[i].subOrder.length; j++) {%>
-                        <%= artifacts[i].subOrder[j] %>: <%=Math.round(artifacts[i][artifacts[i].subOrder[j]]*10)/10 %><br/>
-                    <% } %>
-                    </span>
-                    </button>
-                    <!-- </li>-->
-            <% } %>
-        </div>
     </div>
 </div>
 </html>

@@ -898,7 +898,7 @@ function syncResinCount(userCollection, userQuery){
                 }
 
                 if (resincount + (resinInc+1) > 160) {
-                    console.log("RESINCOUNT EXCEEDED");
+                    //console.log("RESINCOUNT EXCEEDED");
                     resinInc = 160 - (resincount+1);
                 }
 
@@ -1123,7 +1123,7 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
 }
 
 function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
-    console.log('Level update');
+    //console.log('Level update');
 
     const obj = convertArtifacts([mongoObj])[0];
 
@@ -1232,7 +1232,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
 }
 
 function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId){
-    console.log("In levelArtifact");
+    //console.log("In levelArtifact");
     //console.log(selected);
     if (selected === undefined || fodderIDArr.length === 0) {
         res.status(400).send("Missing selection");

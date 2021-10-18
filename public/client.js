@@ -3,7 +3,6 @@ import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRa
 //const {artifacts, sub_percentages, main_percentages} = artMod;
 console.log("hi");
 
-
 function rollArtifact(domainName) {
     const request = {domain: domainName}
     fetch('/artifacts', {
@@ -96,6 +95,20 @@ function levelUpdatePage(obj){
     level.innerHTML = "+" + obj['level'] + " " + obj['slot'];
     main.innerHTML = Math.round(obj['mainVal']*10)/10;
     subs.innerHTML = subsStr;
+
+    const cardmainVal = document.getElementById('cardmainVal');
+    const cardstats = document.getElementById('cardstats');
+    subsStr = "";
+    for(var i = 0; i < obj.subOrder.length; i++){
+        var li = document.getElementById(`li${i}`);
+        console.log(li);
+        console.log(li.childNodes);
+        console.log('------------------------------')
+        li.childNodes[0].textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
+        //subsStr += `<li>${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`+`<br/></li>`
+    }
+    cardmainVal.innerHTML =  main.innerHTML;
+    //cardstats.innerHTML = subsStr;
 }
 
 function countDown(date) {
@@ -125,6 +138,11 @@ function countDown(date) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    /*
+    var li = document.getElementById(`li0`);
+        console.log(li);
+        console.log(li.childNodes);
+        */
     const resindate = document.getElementById('resindate');
     const resintimer = document.getElementById('resintimer');
     const resincount = document.getElementById('resincount');
