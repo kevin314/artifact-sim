@@ -40,8 +40,27 @@
             </aside>
         </nav>
     <--->
-
-    <script type="module" src="client.js"></script>
+    <script type="module">
+        import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
+        window.artifactSets = artifactSets;
+        window.convertArtifacts = convertArtifacts;
+        window.main_percentages = main_percentages;
+        window.sub_percentages = sub_percentages;
+        window.getRandInt = getRandInt;
+        window.weightedRand = weightedRand;
+    </script>
+    <script src="client.js"></script>
+    <script id="inject" type=application/json><%-JSON.stringify(artifacts)%></script>
+    <script> 
+        const artifactArr = JSON.parse(document.getElementById('inject').text);
+        const artifactArrObj = {};
+        
+        artifactArr.forEach(elem => {
+            artifactArrObj[elem._id] = elem;
+        })
+        function selectCard1(...args){selectCard(...args)}
+        function addButton1(...args){addButton(...args)}
+    </script>
 
     <p>Welcome, <%= username %><p>
         <% if(loggedIn === true) { %>
@@ -117,44 +136,6 @@
                 <span>Resin: </span>
                 <span id ="resincount"><%= resin %></span><br/>
             </div>
-        
-
-        <script language="JavaScript">
-        function toggle(source) {
-        checkboxes = document.getElementsByName('check');
-            for(var i=0, n=checkboxes.length;i<n;i++) {
-                checkboxes[i].checked = source.checked;
-            }
-        }
-        function test(obj){
-            var radio = document.getElementById('radio' + obj._id);
-            if(radio.checked === false) {
-                radio.checked = true;
-                var cardheader = document.getElementById('cardheader');
-                cardheader.innerHTML = obj.name;
-                console.log(`images/artifactSets/${obj['set']}/${obj['slot']}.png`)
-                document.getElementById('cardimage').src = `images/artifactSets/${obj['set']}/${obj['slot']}.png`
-                document.getElementById('cardmain').innerHTML = obj.main;
-                document.getElementById('cardmainVal').innerHTML = Math.round(obj.mainVal*10)/10;
-                var statsStr = `<ul>`;
-                
-                var cardstats = document.getElementById('cardstats');
-                // Remove all children of the unordered list of sub-stats
-                cardstats.children[0].textContent = '';
-                for(var i = 0; i < obj.subOrder.length; i++){
-                    var li = document.createElement('li');
-                    li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
-                    cardstats.children[0].appendChild(li);
-                    console.log(li);
-                    console.log(li.childNodes);
-                    console.log('------------------------------')
-                    //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
-                }
-                //statsStr += `</ul>`;
-                //document.getElementById('cardstats').innerHTML = statsStr;
-            } 
-        }
-        </script>
 
         <div class="block">
             <input type="checkbox" onClick="toggle(this)" /> Toggle All<br/>
@@ -171,7 +152,7 @@
             <%= artifacts[0] && artifacts[0].name %>
             </p>
         </header>
-        <div class="card-image">
+        <div class="card-image">            
             <figure class="image is-128x128">
             <img id= "cardimage" src="images/artifactSets/<%= artifacts[0] && artifacts[0]['set']%>/<%= artifacts[0] && artifacts[0]['slot']%>.png" alt="Placeholder image">
             </figure>
@@ -218,7 +199,7 @@
         <form action="/level" method="post" id="levelform"></form>
 
         <% for(var i = 0; i < artifacts.length; i++) {%>
-        <button type="button" id= "button<%=artifacts[i]._id%>" name="artifactButton" onclick="test(<%= JSON.stringify(artifacts[i]) %>)">
+        <button type="button" id= "button<%=artifacts[i]._id%>" name="artifactButton" onclick="(()=>{selectCard1(artifactArrObj['<%-artifacts[i]._id%>'])})()">
                 <span><input type="checkbox" name="check" value="<%=
                                 artifacts[i]._id%>" autocomplete="off" form="deleteform"/></span>
 

@@ -186,7 +186,7 @@ const artifactSets = {
         'Flower of Life': "Lucky Dog's Clover",
         'Plume of Death': "Lucky Dog's Eagle Feather",
         'Sands of Eon': "Lucky Dog's Hourglass",
-        'Goblem of Eonothem': "Lucky Dog's Goblet",
+        'Goblet of Eonothem': "Lucky Dog's Goblet",
         'Circlet of Logos': "Lucky Dog's Silver Circlet",
     },
     'Traveling Doctor': {
@@ -987,13 +987,14 @@ function listArtifacts(res, artifactsCollection, compressionTable, compressObjec
 }
 
 function encodeSubstatOrder(subStats, convert) {
-    var subStatOrderEncode = 0;
-    var len = subStats.length;
+    let subStatOrderEncode = 0;
+    let len = subStats.length;
     for(var i = 0; i < len; i++){
+        let statNum;
         if(convert == true) {
-            var statNum = stringToNumStats[subStats[i]];
+            statNum = stringToNumStats[subStats[i]];
         } else {
-            var statNum = subStats[i];
+            statNum = subStats[i];
         }
         subStatOrderEncode += statNum * (32 ** (len-(i+1)));
     }
@@ -1001,8 +1002,8 @@ function encodeSubstatOrder(subStats, convert) {
 }
 
 function decodeSubstatOrder(value, convert){
-    var subStats = [];
-    var divisor = value;
+    let subStats = [];
+    let divisor = value;
     while(divisor > 0) {
         var remainder = divisor % 32;
         divisor = Math.floor(divisor/32);
@@ -1028,6 +1029,7 @@ function rollSingle(domainName, rarity){
 
     var mainstat = weightedRand(main_percentages[randSlot], []);
     var initialMainVal = main_percentages[randSlot][mainstat]['stats'][rarityEnums[rarity]]['0'];
+    
     /*
     console.log('-----------------------')
     console.log('domainName: ' + domainName);
@@ -1100,15 +1102,15 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
                 var artifactArr = [];
 
                 // Roll 3 star artifacts
-                for (var i = 0; i < parseInt(weightedRand({'3': {chance: 0.50}, '4': {chance: 0.50}}, [])); i++) {
+                for (let i = 0; i < parseInt(weightedRand({'3': {chance: 0.50}, '4': {chance: 0.50}}, [])); i++) {
                     artifactArr.push(rollSingle(domainName, 3));
                 }
                 // Roll 4 star artifacts
-                for (var i = 0; i < parseInt(weightedRand({'2': {chance: 0.50}, '3': {chance: 0.50}}, [])); i++) {
+                for (let i = 0; i < parseInt(weightedRand({'2': {chance: 0.50}, '3': {chance: 0.50}}, [])); i++) {
                     artifactArr.push(rollSingle(domainName, 4));
                 }
                 // Roll 5 star artifacts
-                for (var i = 0; i < parseInt(weightedRand({'1': {chance: 0.90}, '2': {chance: 0.10}}, [])); i++) {
+                for (let i = 0; i < parseInt(weightedRand({'1': {chance: 0.90}, '2': {chance: 0.10}}, [])); i++) {
                     artifactArr.push(rollSingle(domainName, 5));
                 }
 
@@ -1172,14 +1174,14 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
 
         } else {
             // Decode substat order
-            var subStats = obj.subOrder;
-            var subStat = weightedRand(sub_percentages, [obj['main']].concat(subStats));
-            var statRoll = sub_percentages[subStat]['stats'][rarityEnums[obj['rarity']]][Math.floor(Math.random()*4)];
+            let subStats = obj.subOrder;
+            let subStat = weightedRand(sub_percentages, [obj['main']].concat(subStats));
+            let statRoll = sub_percentages[subStat]['stats'][rarityEnums[obj['rarity']]][Math.floor(Math.random()*4)];
 
             subStats = subStats.concat(subStat);
-            var orderEncoded = encodeSubstatOrder(subStats, true);
+            let orderEncoded = encodeSubstatOrder(subStats, true);
 
-            var levelHistory = obj['levelHistory'];
+            let levelHistory = obj['levelHistory'];
             levelHistory[level+1] = {[stringToNumStats[subStat]]: statRoll};
 
             artifactsCollection.findOneAndUpdate(
