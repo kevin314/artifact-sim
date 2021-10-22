@@ -1,8 +1,51 @@
 /*import * as artifacts from 'artifacts.js';*/
-import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
+//import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
 //const {artifacts, sub_percentages, main_percentages} = artMod;
 console.log("hi");
 
+function toggle(source) {
+    checkboxes = document.getElementsByName('check');
+        for(var i=0, n=checkboxes.length;i<n;i++) {
+            checkboxes[i].checked = source.checked;
+        }
+}
+function addButton(obj) {
+    artifactArrObj[obj._id] = obj;
+    selectCard(obj);
+    document.getElementById('button' + obj._id).onclick = function() {selectCard(artifactArrObj[obj._id])};
+}
+function selectCard(obj){
+    console.log("In SELECTCARD");
+    
+    var radio = document.getElementById('radio' + obj._id);
+    if(radio.checked === false) {
+        radio.checked = true;
+        var cardheader = document.getElementById('cardheader');
+        cardheader.innerHTML = obj.name;
+        //console.log(`images/artifactSets/${obj['set']}/${obj['slot']}.png`)
+        document.getElementById('cardimage').src = `images/artifactSets/${obj['set']}/${obj['slot']}.png`
+        document.getElementById('cardmain').innerHTML = obj.main;
+        document.getElementById('cardmainVal').innerHTML = Math.round(obj.mainVal*10)/10;
+        var statsStr = `<ul>`;
+        
+        var cardstats = document.getElementById('cardstats');
+        // Remove all children of the unordered list of sub-stats
+        cardstats.children[0].textContent = '';
+        for(var i = 0; i < obj.subOrder.length; i++){
+            var li = document.createElement('li');
+            li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
+            cardstats.children[0].appendChild(li);
+            /*
+            console.log(li);
+            console.log(li.childNodes);
+            console.log('------------------------------')
+            */
+            //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
+        }
+        //statsStr += `</ul>`;
+        //document.getElementById('cardstats').innerHTML = statsStr;
+    } 
+}
 function rollArtifact(domainName) {
     const request = {domain: domainName}
     fetch('/artifacts', {
@@ -26,23 +69,6 @@ function rollArtifact(domainName) {
         })
 }
 
-function test (obj) {
-    console.log("CLIENT TEST")
-    var radio = document.getElementById('radio' + obj._id);
-        if(radio.checked === false) {
-            radio.checked = true;
-            var cardheader = document.getElementById('cardheader');
-            cardheader.innerHTML = obj.name; 
-            document.getElementById('cardmain').innerHTML = obj.main;
-            document.getElementById('cardmainVal').innerHTML = obj.mainVal;
-            var statsStr = `<ul>`;
-            for(var i = 0; i < obj.subOrder.length; i++){
-                statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
-            }
-            statsStr += `</ul>`;
-            document.getElementById('cardstats').innerHTML = statsStr;
-        } 
-}   
 function addButtons(resultArr) {
     const levelbutton = document.getElementById('levelform');
     for(var num = 0; num < resultArr.length; num++){
@@ -50,14 +76,14 @@ function addButtons(resultArr) {
         var rarityStr = "";
         var subsStr = `<span id="subs${result['_id']}">`;
 
-        for(var i = 0; i < result['rarity']; i++){
+        for(let i = 0; i < result['rarity']; i++){
             rarityStr += "&#11088"
         }
-        for(var i = 0; i < result.subOrder.length; i++){
+        for(let i = 0; i < result.subOrder.length; i++){
             subsStr += `${result.subOrder[i]}: ${Math.round(result[result.subOrder[i]]*10)/10}`+`<br/>`
         }
         const str =
-            `<button type="button" id="button${result['_id']}" onclick='test(${JSON.stringify(result).replace(/'/g, '&#39')})'>`+
+            `<button type="button" id="button${result['_id']}" onclick="(()=>{addButton1(${JSON.stringify(result).replace(/'/g, "\\'").replace(/"/g, '\'')})})()">`+
             `<span><input type="checkbox" name="check" value="`+
             `${result['_id']}" autocomplete="off" form="deleteform"/></span>`+
             `${rarityStr}`+
@@ -80,6 +106,7 @@ function addButtons(resultArr) {
     }
 }
 function levelUpdatePage(obj){
+    artifactArrObj[obj._id] = obj;
     const id = obj['_id'];
     //console.log(id);
     const xp = document.getElementById('xp'+id);
@@ -88,7 +115,7 @@ function levelUpdatePage(obj){
     const subs = document.getElementById('subs'+id);
 
     var subsStr = "";
-    for(var i = 0; i < obj.subOrder.length; i++){
+    for(let i = 0; i < obj.subOrder.length; i++){
         subsStr += `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`+`<br/>`
     }
     xp.innerHTML = Math.abs((obj.requiredCumulativeXP-obj.cumulativeXP)-obj.requiredXP) + "/" + obj.requiredXP + " XP";
@@ -98,15 +125,17 @@ function levelUpdatePage(obj){
 
     const cardmainVal = document.getElementById('cardmainVal');
     const cardstats = document.getElementById('cardstats');
-    subsStr = "";
-    for(var i = 0; i < obj.subOrder.length; i++){
-        var li = document.getElementById(`li${i}`);
-        console.log(li);
-        console.log(li.childNodes);
-        console.log('------------------------------')
-        li.childNodes[0].textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
-        //subsStr += `<li>${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`+`<br/></li>`
-    }
+                // Remove all children of the unordered list of sub-stats
+                cardstats.children[0].textContent = '';
+                for(let i = 0; i < obj.subOrder.length; i++){
+                    var li = document.createElement('li');
+                    li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
+                    cardstats.children[0].appendChild(li);
+                    //console.log(li);
+                    //console.log(li.childNodes);
+                    //console.log('------------------------------')
+                    //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
+                }
     cardmainVal.innerHTML =  main.innerHTML;
     //cardstats.innerHTML = subsStr;
 }

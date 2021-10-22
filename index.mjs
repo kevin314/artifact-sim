@@ -281,8 +281,8 @@ function authUser(user, res) {
     if(user.provider == 'discord') {
         const userid = user.id;
         const artifactsCollection = discorddb.collection(userid);
-        var resin = 160;
-        var resinDate = -1;
+        let resin = 160;
+        let resinDate = -1;
         discordUsers.findOne({'userID': userid})
             .then(result => {
                 if(result == null) {
@@ -348,8 +348,8 @@ function authUser(user, res) {
     else if (user.provider == 'google') {
         const email = user.emails[0].value;
         const artifactsCollection = googledb.collection(email);
-        var resin = 160;
-        var resinDate = -1;
+        let resin = 160;
+        let resinDate = -1;
         googleUsers.findOne({'email': email})
             .then(result => {
                 if(result == null) {
