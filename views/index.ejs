@@ -67,9 +67,9 @@
             <button id="logout">Log Out</button>
         <% } else {  %>
             <div class="block">
-                <form action="/auth/discord" method="get" id="authdiscord"></form>
+                <form action="api/discord/auth/discord" method="get" id="authdiscord"></form>
                 <button type="submit" form="authdiscord" id="discordbutton">Sign in with Discord</button>
-                <form action="/auth/google" method="get" id="authgoogle"></form>
+                <form action="api/discord/auth/google" method="get" id="authgoogle"></form>
                 <button type="submit" form="authgoogle" id="googlebutton">Sign in with
                     Google</button>
             </div>
