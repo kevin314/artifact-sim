@@ -36,10 +36,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         const usersdb = client.db('usersdb');
         const discordUsers = usersdb.collection('discord');
 
-        router.get('/auth/discord', passport.authenticate('discord'));
-
-        //router.get('/login', (req, res) => {
-
         router.get('/test', (req, res) => {
             console.log('test');
             res.send('hi');
@@ -118,7 +114,7 @@ MongoClient.connect(url, { useUnifiedTopology:
         router.get('/users/:userid', (req, res) => {
             if(!req.user){
                 console.log("Not authorized");
-                res.send("Unauthorized");
+                res.send("Unauthorized", 401);
                 return;
             }
             console.log('USER');
@@ -156,6 +152,39 @@ MongoClient.connect(url, { useUnifiedTopology:
             compareStats(res, userid, list, discorddb, ObjectId);
         })
 
+        router.get('/auth/google', 
+            (req, res, next) => {
+                let uri = req.get('origin')
+                if(uri === undefined) {
+                    next();
+                    return;
+                }
+                res.cookie('googleRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true});
+                next();
+            },
+            passport.authenticate('google', { scope: ['profile', 'email'] })
+        );
+
+        router.get('/auth/discord', 
+            (req, res, next) => {
+                let uri = req.get('origin')
+                if(uri === undefined) {
+                    next();
+                    return;
+                }
+                res.cookie('discordRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true});
+                next();
+            },
+            passport.authenticate('discord')
+        );
+
+        router.post('/logout', (req, res) => {
+            //req.logout();
+            //req.session = null;
+            req.session.destroy(() => {
+                res.status(200);
+            })
+        })
         /*
         function parseParams(params) {
             const strArr = params['username'].split(':');

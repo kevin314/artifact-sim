@@ -120,7 +120,7 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         app.get('/test', (req, res) => {
             console.log('hi');
-            res.send()
+            res.send({'test': 'hi'});
         })
         app.get('/test', (req, res) => {
             console.log('yo');
@@ -154,22 +154,57 @@ MongoClient.connect(url, { useUnifiedTopology:
             req.user ? next(): res.redirect('/auth/google');
         }
         */
+       
 
-        app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+        //app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
         app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
             function(req, res) {
+                if(req.signedCookies['googleRedirectURI']){
+                    let uri = req.signedCookies['googleRedirectURI']['URI'];
+                    console.log('---------------')
+                    console.log(uri);
+                    console.log('---------------')
+                    res.redirect(uri);
+                } else {
+                    console.log("redirect")
+                    res.redirect('/');
+                }
+            }
+        );
+        /*
+        app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
+            function(req, res) {
+                console.log(req.body);
                 res.redirect('/');
             }
         );
+        */
 
-        app.get('/auth/discord', passport.authenticate('discord'));
+        //app.get('/auth/discord', passport.authenticate('discord'));
 
+        app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }),
+            function(req, res) {
+                if(req.signedCookies['discordRedirectURI']){
+                    let uri = req.signedCookies['discordRedirectURI']['URI'];
+                    console.log('---------------')
+                    console.log(uri);
+                    console.log('---------------')
+                    res.redirect(uri);
+                } else {
+                    console.log("redirect")
+                    res.redirect('/');
+                }
+            }
+        );
+
+        /*
         app.get('/auth/discord/callback', passport.authenticate('discord', {failureRedirect: '/'}),
             function(req, res) {
                 res.redirect('/');
             }
         );
+        */
 
         app.post('/artifacts', (req, res) => {
             const idArr = checkAuth(req, res);
@@ -401,7 +436,7 @@ function authGuest(res, cookieid) {
         guestUsers.findOne({'_id': userid})
         .then(result => {
             if(result == null) {
-                console.log("No guest user with associated cookie")
+                //console.log("No guest user with associated cookie")
                 insertGuest(res);
             } else {
                 (async ()=> {
@@ -440,7 +475,7 @@ function insertGuest(res) {
         }
     ).then(result => {
         const id = result.insertedId.toString();
-        console.log("Signing cookie");
+        //console.log("Signing cookie");
         signCookie(res, id);
         const artifactsCollection = guestdb.collection(id);
         artifactsCollection.find().sort({$natural:-1}).toArray()
