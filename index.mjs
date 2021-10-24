@@ -33,6 +33,19 @@ const port = 3000;
 
 const app = express();
 
+app.set('trust proxy', 1);
+app.all('*', (req, res, next) => {
+	let origin = req.get('origin');
+	if (!origin) {
+		origin = "*";
+	}
+	res.header("Access-Control-Allow-Origin", origin);
+	res.header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT"); 
+	res.header("Access-Control-Allow-Credentials", "true");
+	req.headers["x-forwarded-proto"] = "https";
+	next();
+});
+
 app.use(favicon(__dirname + '/public/favicon.ico'))
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
@@ -48,44 +61,19 @@ app.use(session({
     secret: 'secret',
     resave: false,
     saveUninitialized: false,
+    cookie: {sameSite: "none", secure: true},
 }));
 
-/*
-app.use(session({
-    name: 'guest.connect.sid',
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: false,
-}));
-*/
+app.use((req, res, next)=>{
+	console.log(req.headers);
+	req["session"].secure = true;
+	next();
+
+});
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/api/discord', discordAPI);
-
-/*
-app.use(cookieSession({
-    name: 'genshin-session',
-    keys: ['key1, key2'],
-    secret: 'secret2'
-}));
-import fs from 'fs';
-fs.rename('./subdomains/genshin/public/images/artifactSets/0', './subdomains/genshin/public/images/artifactSets/Adventurer\'s Bam', function(err) {
-    if ( err ) console.log('ERROR: ' + err);
-});
-fs.readdirSync('./subdomains/genshin/public/images/artifactSets/').forEach(file => {
-    console.log(file);
-    for(var p in numToStringSlots) {
-        fs.rename('./subdomains/genshin/public/images/artifactSets/'+file+'/'+ p + '.png', './subdomains/genshin/public/images/artifactSets/'+file+'/'+ numToStringSlots[p] + '.png', function(err) {
-            if ( err ) console.log('ERROR: ' + err);
-        });
-    }
-});
-for(var p in numToStringSets) {
-    fs.rename('./subdomains/genshin/public/images/artifactSets/' + p, './subdomains/genshin/public/images/artifactSets/' + numToStringSets[p], function(err) {
-        if ( err ) console.log('ERROR: ' + err);
-    });
-}
-*/
 
 const databases = {};
 var discorddb, googledb, usersdb, guestdb;
@@ -111,9 +99,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         googleUsers = usersdb.collection('google');
         guestUsers = usersdb.collection('guest');
 
-        //initiateResinCount(discordUsers);
-        //initiateResinCount(googleUsers);
-
         app.get('/failed', (req, res) => {
             res.send('<h1>Log in Failed :</h1>')
         });
@@ -135,28 +120,8 @@ MongoClient.connect(url, { useUnifiedTopology:
                     cookieid = req.signedCookies['guestCookie']['_id'];
                 }
                 authGuest(res, cookieid);
-                /*
-                console.log("--------------------------");
-                console.log("GUEST")
-                console.log(req.signedCookies);
-                console.log("--------------------------");
-                //res.send("GUEST");
-                /*
-                res.render('index', { artifacts: result, username: 'Guest',
-                    resin: resin, resinDate: resinDate, loggedIn: false})
-                */
-                //res.render('login');
             }
         })
-
-        /*
-        const checkUserLoggedIn = (req, res, next) => {
-            req.user ? next(): res.redirect('/auth/google');
-        }
-        */
-       
-
-        //app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
         app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
             function(req, res) {
@@ -172,16 +137,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                 }
             }
         );
-        /*
-        app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
-            function(req, res) {
-                console.log(req.body);
-                res.redirect('/');
-            }
-        );
-        */
-
-        //app.get('/auth/discord', passport.authenticate('discord'));
 
         app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }),
             function(req, res) {
@@ -197,14 +152,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                 }
             }
         );
-
-        /*
-        app.get('/auth/discord/callback', passport.authenticate('discord', {failureRedirect: '/'}),
-            function(req, res) {
-                res.redirect('/');
-            }
-        );
-        */
 
         app.post('/artifacts', (req, res) => {
             const idArr = checkAuth(req, res);

@@ -46,7 +46,7 @@ MongoClient.connect(url, { useUnifiedTopology:
             console.log('GET ARTIFACTS!!');
             console.log(req.params);
             const userid  = req.params['userid'];
-            if (params.userid == '@me'){
+            if (req.params.userid == '@me'){
                 if (req.user) {
                     const user = req.user;
                     listArtifacts(res, discorddb.collection(user.id), compressionTable, compressObject);
@@ -57,7 +57,6 @@ MongoClient.connect(url, { useUnifiedTopology:
             } else {
                 listArtifacts(res, discorddb.collection(userid), compressionTable, compressObject);
             }
-            //res.send('get artifacts');
         })
 
         // Roll artifacts for a user
@@ -73,7 +72,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                 return;
             }
             rollArtifacts(res, setName, discorddb.collection(userid), discordUsers, query);
-            //res.send('roll artifacts');
         })
 
         // Level artifact
@@ -91,7 +89,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                     res.send("Unauthorized", 401);
                 }
             }
-            //res.send('level artifact');
         })
 
         router.put('/users/:userid/artifacts/lock', (req, res) => {
@@ -99,7 +96,6 @@ MongoClient.connect(url, { useUnifiedTopology:
             console.log(req.params);
             const userid  = req.params['userid'];
             lockArtifacts(res, discorddb.collection(userid), req.body.lockList, ObjectId);
-            //res.send('level artifact');
         })
 
         router.put('/users/:userid/artifacts/unlock', (req, res) => {
@@ -107,7 +103,6 @@ MongoClient.connect(url, { useUnifiedTopology:
             console.log(req.params);
             const userid  = req.params['userid'];
             unlockArtifacts(res, discorddb.collection(userid), req.body.unlockList, ObjectId);
-            //res.send('level artifact');
         })
 
         // Get user
@@ -159,7 +154,7 @@ MongoClient.connect(url, { useUnifiedTopology:
                     next();
                     return;
                 }
-                res.cookie('googleRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true});
+                res.cookie('googleRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true, secure: true, sameSite: "None"});
                 next();
             },
             passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -169,10 +164,13 @@ MongoClient.connect(url, { useUnifiedTopology:
             (req, res, next) => {
                 let uri = req.get('origin')
                 if(uri === undefined) {
-                    next();
-                    return;
+			uri = req.get('referer');
+			if(uri === undefined) {
+			    next();
+			    return;
+			}
                 }
-                res.cookie('discordRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true});
+                res.cookie('discordRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: true, secure: true, sameSite: "None"});
                 next();
             },
             passport.authenticate('discord')
