@@ -886,6 +886,7 @@ function convertArtifacts(objs) {
 }
 
 function syncResinCount(userCollection, userQuery){
+    console.log("syncResinCount")
     return new Promise(resolve=> {
         userCollection.findOne(userQuery)
             .then(result => {
@@ -983,7 +984,10 @@ function listArtifacts(res, artifactsCollection, compressionTable, compressObjec
                 res.status(200).send(results)
             }
         })
-        .catch(error => console.log(error))
+        .catch(error => {
+            console.log(error);
+            res.send("ERROR")
+        });
 }
 
 function encodeSubstatOrder(subStats, convert) {
@@ -1077,6 +1081,11 @@ function rollSingle(domainName, rarity){
 }
 
 function rollArtifacts(res, domainName, artifactsCollection, userCollection, userQuery) {
+    console.log('rollArtifacts');
+    console.log(userQuery);
+    console.log('=====')
+    console.log(userCollection);
+    console.log('=====')
     userCollection.findOne(userQuery)
         .then(result =>{
             if(result['resin'] < 5) {
@@ -1116,6 +1125,7 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
 
                 artifactsCollection.insertMany(artifactArr)
                     .then(() => {
+                        console.log(artifactArr);
                         res.status(200).send(artifactArr)
                         //res.end();
                     })
@@ -1236,7 +1246,7 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
 function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId){
     //console.log("In levelArtifact");
     //console.log(selected);
-    if (selected === undefined || fodderIDArr.length === 0) {
+    if (selected === undefined || fodderIDArr === undefined || fodderIDArr.length === 0) {
         res.status(400).send("Missing selection");
         return;
     }
@@ -1343,7 +1353,10 @@ function deleteArtifact(res, removeList, artifactsCollection, sendResponse=true)
 }
 
 function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
-    if (lockList.length === 0) {
+    console.log("in lockArtifacts")
+    console.log(lockList);
+    console.log(artifactsCollection)
+    if (lockList === undefined || lockList.length === 0) {
         res.status(400).send("No selection for lock");
         return;
     }
@@ -1356,14 +1369,15 @@ function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
         {"_id": {$in: lockIDs}, "locked": false},
         {$set: {"locked": true}},
     )
-        .then(result => {
-            res.status(200).send(result.modifiedCount + " artifacts locked");
-        })
-        .catch(error => console.error(error))
+    .then(result => {
+        console.log(result.modifiedCount + " artifacts locked")
+        res.status(200).send(result.modifiedCount + " artifacts locked");
+    })
+    .catch(error => console.error(error))
 }
 
 function unlockArtifacts(res, artifactsCollection, unlockList, ObjectId) {
-    if (unlockList.length === 0) {
+    if (unlockList === undefined || unlockList.length === 0) {
         res.status(400).send("No selection for unlock");
         return;
     }
