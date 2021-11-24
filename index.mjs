@@ -22,7 +22,6 @@ const {ObjectId} = mongodb;
 const {MongoClient} = mongodb;
 import assert from 'assert';
 
-
 import {createCompressionTable, compressObject} from 'jsonschema-key-compression';
 import {decompressObject} from 'jsonschema-key-compression';
 
@@ -36,6 +35,7 @@ const app = express();
 app.set('trust proxy', 1);
 app.all('*', (req, res, next) => {
 	let origin = req.get('origin');
+    //console.log("origin: " + origin)
 	if (!origin) {
 		origin = "*";
 	}
@@ -50,8 +50,11 @@ app.use(favicon(__dirname + '/public/favicon.ico'))
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+//app.use(bodyParser.urlencoded({ extended: true }));
+//app.use(bodyParser.json());
+
+app.use(express.urlencoded({extended: true}));
+app.use(express.json());
 
 app.use(cookieParser('secretstring'));
 
@@ -61,11 +64,12 @@ app.use(session({
     secret: 'secret',
     resave: false,
     saveUninitialized: false,
-    cookie: {sameSite: "none", secure: true},
+    //This line breaks login for users
+    //cookie: {sameSite: "none", secure: true},
 }));
 
 app.use((req, res, next)=>{
-	console.log(req.headers);
+	//console.log(req.headers);
 	req["session"].secure = true;
 	next();
 
@@ -75,7 +79,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use('/api/discord', discordAPI);
 
-const databases = {};
 var discorddb, googledb, usersdb, guestdb;
 var regularUsersCollection, discordUsers, googleUsers, guestUsers;
 
@@ -89,37 +92,30 @@ MongoClient.connect(url, { useUnifiedTopology:
         googledb = client.db('google');
         guestdb = client.db('guest');
         usersdb = client.db('usersdb');
-        databases['discord'] = discorddb;
-        databases['google'] = googledb;
-
-        var userid;
 
         regularUsersCollection = usersdb.collection('regular');
         discordUsers = usersdb.collection('discord');
         googleUsers = usersdb.collection('google');
         guestUsers = usersdb.collection('guest');
 
-        app.get('/failed', (req, res) => {
-            res.send('<h1>Log in Failed :</h1>')
-        });
-
-        app.get('/test', (req, res) => {
-            console.log('hi');
-            res.send({'test': 'hi'});
-        })
         app.get('/test', (req, res) => {
             console.log('yo');
         })
         app.get('/', (req, res) => {
+            /*
+            console.log("in main /")
+            console.log(req.user);
+            console.log(req.signedCookies)
+            */
             //console.log(req.session);
             if(req.user) {
-                authUser(req.user, res);
+                authUser(req.user, res, true);
             } else {
                 var cookieid;
                 if(req.signedCookies['guestCookie']){
                     cookieid = req.signedCookies['guestCookie']['_id'];
                 }
-                authGuest(res, cookieid);
+                authGuest(res, cookieid, false, true);
             }
         })
 
@@ -140,6 +136,8 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }),
             function(req, res) {
+                console.log("discord callback")
+                console.log(req.signedCookies)
                 if(req.signedCookies['discordRedirectURI']){
                     let uri = req.signedCookies['discordRedirectURI']['URI'];
                     console.log('---------------')
@@ -200,8 +198,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         })
     });
 
-//idArr[0] = provider, [1] = query, [2] = id
-
 function checkAuth(req, res) {
     if(req.user) {
         var user = req.user;
@@ -211,10 +207,13 @@ function checkAuth(req, res) {
             return ['google', {'email': user.emails[0].value}, user.emails[0].value];
         }
     } else {
+        /*
         if(req.signedCookies['guestCookie'] == null) {
-            res.send("Unauthorized");
+            authGuest();
+            //res.send("Unauthorized");
             return;
         }
+        */
         var cookieid = req.signedCookies['guestCookie']['_id'];
         var mongocookieid;
         try {
@@ -227,40 +226,12 @@ function checkAuth(req, res) {
     }
 }
 
-function rollAuth(user, res, req) {
-    console.log(user);
-    const idArr = checkAuth(user);
-    const artifactsdb = databases[user.provider];
-    const userCollection = usersdb.collection(user.provider);
-
-    const artifactsCollection = artifactsdb.collection(idArr[1]);
-    (async ()=> {
-        await syncResinCount(discordUsers, {'userID': user.id})
-        rollArtifacts(res, req.body.domain, artifactsCollection, userCollection, idArr[0]);
-    })()
+function renderArtifacts(provider){
 }
 
-function rollGuest(res, req) {
-    if(req.signedCookies['guestCookie']){
-        var cookieid = req.signedCookies['guestCookie']['_id'];
-    }
-    const artifactsdb = databases[user.provider];
-    const userCollection = usersdb.collection(user.provider);
-
-    const artifactsCollection = artifactsdb.collection(idArr[1]);
-    (async ()=> {
-        await syncResinCount(discordUsers, {'userID': user.id})
-        rollArtifacts(res, req.body.domain, artifactsCollection, userCollection, idArr[0]);
-    })()
-}
-
-
-function authUser(user, res) {
-    /*
-    console.log('---------------------------------------------------');
-    console.log("CURRENT DATE: " + Math.floor(Date.now()/1000))
-    */
-    if(user.provider == 'discord') {
+function authUser(user, res, isRender=false) {
+    console.log("authUser")
+    if(user.provider === 'discord') {
         const userid = user.id;
         const artifactsCollection = discorddb.collection(userid);
         let resin = 160;
@@ -278,51 +249,54 @@ function authUser(user, res) {
                         }
                     )
                     console.log("RESULT NULL")
-                    artifactsCollection.find().sort({$natural:-1}).toArray()
-                        .then(results => {
-                            var artifactsArr = convertArtifacts(results);
-                            res.render('index', { artifacts: artifactsArr, username: user.username,
-                                resin: resin, resinDate: resinDate, loggedIn: true})
-                        })
-                        .catch(error => console.log(error))
-                } else {
-                    (async ()=> {
-                        var userObj = await syncResinCount(discordUsers, {'userID': userid})
-                        resin = userObj['resin'];
-                        resinDate = userObj['nextResinUpdate'];
+                    
+                    if(isRender===true){
                         artifactsCollection.find().sort({$natural:-1}).toArray()
                             .then(results => {
-                                /*
-                                console.log("RENDERING VIEW");
-                                console.log("RESIN: " + resin);
-                                console.log("RESINDATE: " +  resinDate);
-                                */
                                 var artifactsArr = convertArtifacts(results);
-
-                                /*
-                                var compressedArr = []
-                                results.forEach(elem => {
-                                    compressedArr.push(compressObject(compressionTable, elem));
-                                })
-                                console.log('Compressed Arr');
-                                console.log(compressedArr);
-                                console.log(compressedArr[0]['|c']);
-                                console.log('===========================');
-
-                                var decompressedArr = []
-                                compressedArr.forEach(elem => {
-                                    decompressedArr.push(decompressObject(compressionTable, elem));
-                                })
-                                console.log('Decompressed Arr');
-                                console.log(decompressedArr);
-                                console.log(decompressedArr[0]['levelHistory']);
-                                console.log('===========================');
-                                */
-
                                 res.render('index', { artifacts: artifactsArr, username: user.username,
                                     resin: resin, resinDate: resinDate, loggedIn: true})
                             })
                             .catch(error => console.log(error))
+                    }
+                    
+                } else {
+                    (async ()=> {
+                        var userObj = await syncResinCount(discordUsers, {'userID': userid})
+                        
+                        
+                        resin = userObj['resin'];
+                        resinDate = userObj['nextResinUpdate'];
+                        if(isRender===true){
+                            artifactsCollection.find().sort({$natural:-1}).toArray()
+                                .then(results => {
+                                    var artifactsArr = convertArtifacts(results);
+
+                                    /*
+                                    var compressedArr = []
+                                    results.forEach(elem => {
+                                        compressedArr.push(compressObject(compressionTable, elem));
+                                    })
+                                    console.log('Compressed Arr');
+                                    console.log(compressedArr);
+                                    console.log(compressedArr[0]['|c']);
+                                    console.log('===========================');
+
+                                    var decompressedArr = []
+                                    compressedArr.forEach(elem => {
+                                        decompressedArr.push(decompressObject(compressionTable, elem));
+                                    })
+                                    console.log('Decompressed Arr');
+                                    console.log(decompressedArr);
+                                    console.log(decompressedArr[0]['levelHistory']);
+                                    console.log('===========================');
+                                    */
+
+                                    res.render('index', { artifacts: artifactsArr, username: user.username,
+                                        resin: resin, resinDate: resinDate, loggedIn: true})
+                                })
+                                .catch(error => console.log(error))
+                            }
                     })()
                 }
             });
@@ -342,79 +316,111 @@ function authUser(user, res) {
                             'nextResinUpdate': -1,
                         }
                     )
-                    artifactsCollection.find().sort({$natural:-1}).toArray()
-                    .then(results => {
-                        var artifactsArr = convertArtifacts(results);
-                        res.render('index', { artifacts: artifactsArr, username: user.name.givenName, resin: resin, resinDate: resinDate, loggedIn: true})
-                    })
-                    .catch(error => console.log(error))
+                    if(isRender===true){
+                        artifactsCollection.find().sort({$natural:-1}).toArray()
+                        .then(results => {
+                            var artifactsArr = convertArtifacts(results);
+                            res.render('index', { artifacts: artifactsArr, username: user.name.givenName, resin: resin, resinDate: resinDate, loggedIn: true})
+                        })
+                        .catch(error => console.log(error))
+                    }
                 } else {
                     (async ()=> {
                         var userObj = await syncResinCount(googleUsers, {'email': email})
-                        resin = userObj['resin'];
-                        resinDate = userObj['nextResinUpdate'];
-                        artifactsCollection.find().sort({$natural:-1}).toArray()
-                            .then(results => {
-                                /*
-                                console.log("RENDERING VIEW");
-                                console.log("RESIN: " + resin);
-                                console.log("RESINDATE: " +  resinDate);
-                                */
-                                var artifactsArr = convertArtifacts(results);
-                                res.render('index', { artifacts: artifactsArr, username: user.name.givenName,
-                                    resin: resin, resinDate: resinDate, loggedIn: true})
-                            })
-                            .catch(error => console.log(error))
+                        if(isRender===true){
+                            resin = userObj['resin'];
+                            resinDate = userObj['nextResinUpdate'];
+                            artifactsCollection.find().sort({$natural:-1}).toArray()
+                                .then(results => {
+                                    /*
+                                    console.log("RENDERING VIEW");
+                                    console.log("RESIN: " + resin);
+                                    console.log("RESINDATE: " +  resinDate);
+                                    */
+                                    var artifactsArr = convertArtifacts(results);
+                                    res.render('index', { artifacts: artifactsArr, username: user.name.givenName,
+                                        resin: resin, resinDate: resinDate, loggedIn: true})
+                                })
+                                .catch(error => console.log(error))
+                            }
                     })()
                 }
             });
     }
 }
 
-function signCookie(res, id) {
-    res.cookie('guestCookie', {_id: id}, {signed: true, maxAge: 7776000000, httpOnly: true});
-    //res.redirect('/');
-}
-
-function authGuest(res, cookieid) {
-    var userid = cookieid;
-    try {
-        userid = ObjectId(userid);
-        guestUsers.findOne({'_id': userid})
-        .then(result => {
-            if(result == null) {
-                //console.log("No guest user with associated cookie")
-                insertGuest(res);
-            } else {
-                (async ()=> {
-                    var userObj = await syncResinCount(guestUsers, {'_id': userid})
-                    var resin = userObj['resin'];
-                    var resinDate = userObj['nextResinUpdate'];
-                    const artifactsCollection = guestdb.collection(userid.toString());
-                    artifactsCollection.find().sort({$natural:-1}).toArray()
-                        .then(results => {
-                            /*
-                                console.log("RENDERING VIEW");
-                                console.log("RESIN: " + resin);
-                                console.log("RESINDATE: " +  resinDate);
-                                */
-                            var artifactsArr = convertArtifacts(results);
-                            res.render('index', { artifacts: artifactsArr, username: 'Guest',
-                                resin: resin, resinDate: resinDate, loggedIn: false})
-                        })
-                        .catch(error => console.log(error))
-                })()
+async function authGuest(res, cookieid, createGuest=false, isRender=false) {
+    return await new Promise((resolve, reject) => {
+        console.log("authGuest")
+        var userid = cookieid;
+        try {
+            console.log('1')
+            userid = ObjectId(userid);
+            guestUsers.findOne({'_id': userid})
+            .then(result => {
+                console.log('1a')
+                if(result == null) {
+                    console.log('2');
+                    //console.log("No guest user with associated cookie")
+                    if(createGuest === true){
+                        insertGuest(resolve, res);
+                    }
+                    if(isRender===true){
+                        var resin = 160;
+                        var resinDate = -1;
+                        if(cookieid === undefined){
+                            res.render('index', { artifacts: [], username: 'Guest',
+                                    resin: resin, resinDate: resinDate, loggedIn: false})
+                        } else {
+                            const artifactsCollection = guestdb.collection(cookieid);
+                            artifactsCollection.find().sort({$natural:-1}).toArray()
+                                .then(results => {
+                                    var artifactsArr = convertArtifacts(results);
+                                    res.render('index', { artifacts: artifactsArr, username: 'Guest',
+                                        resin: resin, resinDate: resinDate, loggedIn: false})
+                                })
+                                .catch(error => console.log(error))
+                        }
+                    }
+                } else {
+                    console.log('3');
+                    (async ()=> {
+                        var userObj = await syncResinCount(guestUsers, {'_id': userid})
+                        resolve(userid.toString());
+                        console.log("Resolved cookie")
+                        if(isRender===true){
+                            var resin = userObj['resin'];
+                            var resinDate = userObj['nextResinUpdate'];
+                            const artifactsCollection = guestdb.collection(userid.toString());
+                            artifactsCollection.find().sort({$natural:-1}).toArray()
+                                .then(results => {
+                                    var artifactsArr = convertArtifacts(results);
+                                    res.render('index', { artifacts: artifactsArr, username: 'Guest',
+                                        resin: resin, resinDate: resinDate, loggedIn: false})
+                                })
+                                .catch(error => console.log(error))
+                        }
+                    })()
+                }
+            });
+        } catch (error) {
+            console.log("No usable userid cookie")
+            insertGuest(res);
+            if(isRender === true){
+                const artifactsCollection = guestdb.collection(userid.toString());
+                artifactsCollection.find().sort({$natural:-1}).toArray()
+                    .then(results => {
+                        var artifactsArr = convertArtifacts(results);
+                        res.render('index', { artifacts: artifactsArr, username: 'Guest',
+                            resin: resin, resinDate: resinDate, loggedIn: false})
+                    })
+                    .catch(error => console.log(error))
             }
-        });
-    } catch (error) {
-        console.log("No usable userid cookie")
-        insertGuest(res);
-    }
+        }
+    })
 }
 
-function insertGuest(res) {
-    var resin = 160;
-    var resinDate = -1;
+function insertGuest(resolve, res) {
     guestUsers.insertOne(
         {
             'resin': 160,
@@ -422,17 +428,17 @@ function insertGuest(res) {
         }
     ).then(result => {
         const id = result.insertedId.toString();
-        //console.log("Signing cookie");
         signCookie(res, id);
-        const artifactsCollection = guestdb.collection(id);
-        artifactsCollection.find().sort({$natural:-1}).toArray()
-            .then(results => {
-                var artifactsArr = convertArtifacts(results);
-                res.render('index', { artifacts: artifactsArr, username: 'Guest',
-                    resin: resin, resinDate: resinDate, loggedIn: false})
-            })
-            .catch(error => console.log(error))
-        })
+        console.log('signed')
+        resolve(id);
+        console.log("Resolved cookie")
+        //const artifactsCollection = guestdb.collection(id);
+    })
 }
 
-export {app as genshinApp};
+function signCookie(res, id) {
+    res.cookie('guestCookie', {_id: id}, {signed: true, maxAge: 7776000000, httpOnly: true});
+    //res.redirect('/');
+}
+
+export {app as genshinApp, authUser, authGuest, checkAuth, insertGuest};
