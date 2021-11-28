@@ -1255,11 +1255,15 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
         return;
     }
 
-    var artifactID = ObjectId(selected);
-    var fodderIDs = [];
-    fodderIDArr.forEach(id => {
-        fodderIDs.push(ObjectId(id));
-    });
+    try {
+        var artifactID = ObjectId(selected);
+        var fodderIDs = [];
+        fodderIDArr.forEach(id => {
+            fodderIDs.push(ObjectId(id));
+        });
+    } catch {
+        res.status(400).send("Invalid artifact ID");
+    }
 
     artifactsCollection.findOne({"_id": artifactID})
         .then(obj => {

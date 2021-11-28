@@ -189,25 +189,39 @@ MongoClient.connect(url, { useUnifiedTopology:
             }
             next();
         }, function (req,res,next){
-            ensureUser(req, res, next, ()=> {levelArtifact(res, getArtifactsCol(req.user && req.user.provider, req.currID), req.params['artifactid'], req.body.fodder, ObjectId)})
+            ensureUser(req, res, next, ()=> {levelArtifact(res, getArtifactsCol(req.user && req.user.provider, req.currID), req.body.target, req.body.fodder, ObjectId)})
         });
 
-        router.post('/users/:userid/artifacts/delete', (req, res, next) => {
-
+        router.delete('/users/:userid/artifacts/delete', (req, res, next) => {
+            console.log("DELETE")
+            console.log(req.params);
+            if(res.locals.sendEmpty === true){
+                console.log("0 artifacts deleted")
+                res.send('0 artifacts deleted');
+                return;
+            }
             var remove = req.body.deleteList;
-            const idArr = checkAuth(req.user);
-            const artifactsdb = client.db(req.user.provider);
-            const artifactsCollection = artifactsdb.collection(idArr[1]);
+            //const idArr = checkAuth(req.user);
+            //const artifactsdb = client.db(req.user.provider);
+            //const artifactsCollection = artifactsdb.collection(idArr[1]);
             var removeIdArr = [];
+            
 
-            remove.forEach(id => {
-                removeIdArr.push(ObjectId(id));
-            });
-
-            deleteArtifact(res, removeIdArr, artifactsCollection);
+            try{
+                remove.forEach(id => {
+                    removeIdArr.push(ObjectId(id));
+                });
+                req.removeIdArr = removeIdArr;
+            } catch {
+                res.status(400).send("Invalid artifact ID")
+                return;
+            }
+            next();
+            //deleteArtifact(res, removeIdArr, artifactsCollection);
         }, function (req,res,next){
-            ensureUser(req, res, next, ()=> {deleteArtifact(res, getArtifactsCol(req.user && req.user.provider, req.currID), req.body.lockList, ObjectId)})
+            ensureUser(req, res, next, ()=> {deleteArtifact(res, req.removeIdArr, getArtifactsCol(req.user && req.user.provider, req.currID))})
         });
+
 
         //Lock artifacts
         router.put('/users/:userid/artifacts/lock', (req, res, next) => {

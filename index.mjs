@@ -101,6 +101,7 @@ MongoClient.connect(url, { useUnifiedTopology:
         app.get('/test', (req, res) => {
             console.log('yo');
         })
+
         app.get('/', (req, res) => {
             /*
             console.log("in main /")
@@ -151,9 +152,10 @@ MongoClient.connect(url, { useUnifiedTopology:
             }
         );
 
-        app.post('/artifacts', (req, res) => {
-            const idArr = checkAuth(req, res);
+        app.post('/artifacts', async (req, res) => {
+            const idArr = await checkAuth(req, res, true);
             const artifactsdb = client.db(idArr[0]);
+            console.log(idArr)
             const userCollection = usersdb.collection(idArr[0]);
 
             const artifactsCollection = artifactsdb.collection(idArr[2]);
@@ -163,9 +165,9 @@ MongoClient.connect(url, { useUnifiedTopology:
             })()
         });
 
-        app.post('/delete', (req, res) => {
+        app.post('/delete', async (req, res) => {
             var remove = req.body.ids;
-            const idArr = checkAuth(req, res);
+            const idArr = await checkAuth(req, res);
             const artifactsdb = client.db(idArr[0]);
             const artifactsCollection = artifactsdb.collection(idArr[2]);
             var removeIdArr = [];
@@ -179,8 +181,8 @@ MongoClient.connect(url, { useUnifiedTopology:
             deleteArtifact(res, removeIdArr, artifactsCollection);
         });
 
-        app.post('/level', (req, res) => {
-            const idArr = checkAuth(req, res);
+        app.post('/level', async (req, res) => {
+            const idArr = await checkAuth(req, res);
             const artifactsdb = client.db(idArr[0]);
             const artifactsCollection = artifactsdb.collection(idArr[2]);
             var selected = req.body.id;
@@ -198,7 +200,7 @@ MongoClient.connect(url, { useUnifiedTopology:
         })
     });
 
-function checkAuth(req, res) {
+async function checkAuth(req, res, createGuest=false) {
     if(req.user) {
         var user = req.user;
         if (user.provider == 'discord') {
@@ -214,7 +216,17 @@ function checkAuth(req, res) {
             return;
         }
         */
-        var cookieid = req.signedCookies['guestCookie']['_id'];
+        let cookieid;
+        if(req.signedCookies['guestCookie']){
+            cookieid = req.signedCookies['guestCookie']['_id'];
+        } 
+        if(createGuest === true) {
+            cookieid = await authGuest(res, cookieid, true, false);
+            //cookieid = req.signedCookies['guestCookie']['_id'];
+        } else {
+            res.locals.sendEmpty = true;
+            console.log("Send empty")
+        }
         var mongocookieid;
         try {
             mongocookieid = ObjectId(cookieid);
