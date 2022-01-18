@@ -1,7 +1,34 @@
 /*import * as artifacts from 'artifacts.js';*/
 //import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
 //const {artifacts, sub_percentages, main_percentages} = artMod;
+//import {createCompressionTable, decompressObject} from 'jsonschema-key-compression';
+//import { artifactSchema } from './artifactModule.mjs';
+
+//const compressionTable = createCompressionTable(artifactSchema);
+
 console.log("hi");
+console.time('bench');
+fetch('/api/discord/users/@me/artifacts', {
+    method: 'get',
+    headers: {'Content-Type': 'application/json'},
+})
+    .then(res => {
+        console.log("RESPONSE:");
+        console.log(res);
+        res.json()
+    .then(resArr => {
+        console.log("RESPONSEARR")
+        console.log(resArr);
+        let decompArr = [];
+        for (let obj in resArr) {
+            decompArr.push(decompressObject(compressionTable, obj));
+        }
+        console.timeEnd('bench');
+        console.log("decompArr:");
+        console.log(decompArr); 
+    })
+    });
+
 
 function toggle(source) {
     checkboxes = document.getElementsByName('check');

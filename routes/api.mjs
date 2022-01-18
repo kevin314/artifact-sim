@@ -1,4 +1,4 @@
-import express, { application } from 'express';
+import express from 'express';
 import bodyParser from 'body-parser';
 import {artifactSchema, listArtifacts, rollArtifacts, levelArtifact, lockArtifacts, unlockArtifacts, deleteArtifact} from '../public/artifactModule.mjs';
 import {refreshStats, compareStats} from '../public/statistics.mjs';
@@ -10,10 +10,12 @@ import session from 'express-session';
 import passport from 'passport';
 import '../passport.mjs';
 
+
 import {createCompressionTable, compressObject} from 'jsonschema-key-compression';
 import {decompressObject} from 'jsonschema-key-compression';
 
 const compressionTable = createCompressionTable(artifactSchema);
+
 
 const {MongoClient, ObjectId} = mongodb;
 //import {getClient} from '../mongo.mjs';
@@ -119,7 +121,11 @@ MongoClient.connect(url, { useUnifiedTopology:
             if(req.user) {
                 //authUser(req.user, res);
                 //console.log(getArtifactsCol(req.user.provider, req.user.id));
-                req.currID = req.user.id;
+                if (req.user.provider === 'google') {
+                    req.currID = req.user.emails[0].value;
+                } else {
+                    req.currID = req.user.id;
+                }
             } else {
                 let cookieid;
                 if(req.signedCookies['guestCookie']){
@@ -144,7 +150,8 @@ MongoClient.connect(url, { useUnifiedTopology:
                 res.send([]);
             }
             next();
-        }, function (req,res,next){ensureUser(req, res, next, ()=> {listArtifacts(res, getArtifactsCol(req.user && req.user.provider, req.currID))})});
+        }, function (req,res,next){ensureUser(req, res, next, ()=> {listArtifacts(res, getArtifactsCol(req.user && req.user.provider, req.currID), true)})});
+        //function (req,res,next){ensureUser(req, res, next, ()=> {listArtifacts(res, getArtifactsCol(req.user && req.user.provider, req.currID), null, null)})});
 
         // Roll artifacts for a user
         router.post('/users/:userid/artifacts', async (req, res, next) => {
@@ -348,5 +355,5 @@ MongoClient.connect(url, { useUnifiedTopology:
         }
         */
 })
-export {router as discordAPI}
+export {compressObject, decompressObject, compressionTable, router as discordAPI}
 

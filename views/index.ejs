@@ -2,6 +2,7 @@
 <html>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <link rel="stylesheet" href="index.css">
+    <!--<script src="https://cdn.jsdelivr.net/npm/jsonschema-key-compression@1.6.1/dist/lib/index.min.js"></script> -->
     
     <!---
         <nav id="navBar">
@@ -41,15 +42,17 @@
         </nav>
     <--->
     <script type="module">
-        import {artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
+        import {compressionTable, decompressObject, artifactSets, convertArtifacts, main_percentages, sub_percentages, getRandInt, weightedRand} from './artifactModule.mjs';
         window.artifactSets = artifactSets;
         window.convertArtifacts = convertArtifacts;
         window.main_percentages = main_percentages;
         window.sub_percentages = sub_percentages;
         window.getRandInt = getRandInt;
         window.weightedRand = weightedRand;
+        window.compressionTable = compressionTable;
+        window.decompressObject = decompressObject;
     </script>
-    <script src="client.js"></script>
+    <script type="module" src="client.js"></script>
     <script id="inject" type=application/json><%-JSON.stringify(artifacts)%></script>
     <script> 
         const artifactArr = JSON.parse(document.getElementById('inject').text);
@@ -58,6 +61,8 @@
         artifactArr.forEach(elem => {
             artifactArrObj[elem._id] = elem;
         })
+        console.log("artifactArrObj: ");
+        console.log(artifactArrObj);
         function selectCard1(...args){selectCard(...args)}
         function addButton1(...args){addButton(...args)}
     </script>
