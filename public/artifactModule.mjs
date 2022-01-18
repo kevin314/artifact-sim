@@ -1,3 +1,7 @@
+import {createCompressionTable, compressObject} from '../routes/api.mjs';
+import {decompressObject} from '../routes/api.mjs';
+
+
 const schemaStats = {
     1: {type: "number"},
     2: {type: "number"},
@@ -41,6 +45,8 @@ const artifactSchema = {
     },
     required: ["set", "slot", "rarity", "level", "cumulativeXP", "requiredCumulativeXP", "requiredXP", "main", "mainVal", "locked", "levelHistory", "subOrder"],
 }
+
+const compressionTable = createCompressionTable(artifactSchema);
 
 const rarityEnums = {
     3: 'three',
@@ -971,10 +977,10 @@ function weightedRand(spec, skipArr) {
     }
 }
 
-function listArtifacts(res, artifactsCollection, compressionTable, compressObject){
+function listArtifacts(res, artifactsCollection, doCompress){
     artifactsCollection.find().sort({$natural:-1}).toArray()
         .then(results => {
-            if(compressionTable && compressObject) {
+            if(doCompress) {
                 var compressedArr = []
                 results.forEach(elem => {
                     compressedArr.push(compressObject(compressionTable, elem));
@@ -1402,4 +1408,4 @@ function unlockArtifacts(res, artifactsCollection, unlockList, ObjectId) {
 
 function deleteUser(){}
 
-export{artifactSchema, artifacts, artifactSets, numToStringStats, numToStringSlots, numToStringSets, stringToNumStats, convertArtifacts, decodeSubstatOrder, encodeSubstatOrder, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact,syncResinCount, lockArtifacts, unlockArtifacts}
+export{artifactSchema, compressionTable, decompressObject, artifacts, artifactSets, numToStringStats, numToStringSlots, numToStringSets, stringToNumStats, convertArtifacts, decodeSubstatOrder, encodeSubstatOrder, main_percentages, sub_percentages, getRandInt, weightedRand, listArtifacts, rollArtifacts, levelArtifact, deleteArtifact,syncResinCount, lockArtifacts, unlockArtifacts}

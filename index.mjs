@@ -22,10 +22,10 @@ const {ObjectId} = mongodb;
 const {MongoClient} = mongodb;
 import assert from 'assert';
 
-import {createCompressionTable, compressObject} from 'jsonschema-key-compression';
-import {decompressObject} from 'jsonschema-key-compression';
+//import {createCompressionTable, compressObject, decompressObject} from 'jsonschema-key-compression';
 
-const compressionTable = createCompressionTable(artifactSchema);
+
+//const compressionTable = createCompressionTable(artifactSchema);
 
 const router = express.Router();
 const port = 3000;
@@ -124,9 +124,11 @@ MongoClient.connect(url, { useUnifiedTopology:
             function(req, res) {
                 if(req.signedCookies['googleRedirectURI']){
                     let uri = req.signedCookies['googleRedirectURI']['URI'];
+                    /*
                     console.log('---------------')
                     console.log(uri);
                     console.log('---------------')
+                    */
                     res.redirect(uri);
                 } else {
                     console.log("redirect")
@@ -363,16 +365,16 @@ function authUser(user, res, isRender=false) {
 
 async function authGuest(res, cookieid, createGuest=false, isRender=false) {
     return await new Promise((resolve, reject) => {
-        console.log("authGuest")
+        //console.log("authGuest")
         var userid = cookieid;
         try {
-            console.log('1')
+            //console.log('1')
             userid = ObjectId(userid);
             guestUsers.findOne({'_id': userid})
             .then(result => {
-                console.log('1a')
+                //console.log('1a')
                 if(result == null) {
-                    console.log('2');
+                    //console.log('2');
                     //console.log("No guest user with associated cookie")
                     if(createGuest === true){
                         insertGuest(resolve, res);
@@ -395,7 +397,7 @@ async function authGuest(res, cookieid, createGuest=false, isRender=false) {
                         }
                     }
                 } else {
-                    console.log('3');
+                    //console.log('3');
                     (async ()=> {
                         var userObj = await syncResinCount(guestUsers, {'_id': userid})
                         resolve(userid.toString());
