@@ -14,7 +14,6 @@ const statsObjectTemplate = {
 }
 
 function refreshStats(database){
-    console.log('refresh');
     const statsObject = JSON.parse(JSON.stringify(statsObjectTemplate));
     database.listCollections().toArray((err, obj) => {
         obj.forEach(result => {
@@ -77,7 +76,6 @@ function refreshStats(database){
                 }}
             ])
             aggObj.forEach(elem => {
-                console.log(elem);
                 for(const stat in elem) {
                     if(elem[stat][0]) {
                         statsObject[stat].push(...(elem[stat][0]['values']));
@@ -116,11 +114,7 @@ async function compareStats(res, userid, list, database, ObjectId){
                 await statsCol.find({'stat': {$in: stats}}).toArray()
                     .then(docArr => {
                         statsObj[artifactID] = {};
-                        //console.log('docArr');
-                        //console.log(docArr)
                         docArr.forEach(statsDoc => {
-                            //console.log('statsDoc');
-                            //console.log(statsDoc);
                             const statName = statsDoc.stat;
                             const statVals = statsDoc.values;
                             statsObj[artifactID][statName] = {}
@@ -135,15 +129,13 @@ async function compareStats(res, userid, list, database, ObjectId){
 
                             var percentile = Math.round(((lower/statVals.length)*100) * 100) / 100;
                             statsObj[artifactID][statName]['percentile'] = percentile;
-                            //console.log(statsObj[artifactID][statName]['percentile'])
                             statsObj[artifactID][statName]['count'] = statVals.length;
                             statsObj[artifactID][statName]['average'] = Math.round((sum/statVals.length)*100) /100;
                         })
                     })
             }
         })
-    console.log('--------------------------------------------------');
-    console.log(statsObj);
+
     res.status(200).send(statsObj);
 }
 

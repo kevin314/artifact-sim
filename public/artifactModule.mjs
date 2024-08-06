@@ -862,20 +862,13 @@ function convertArtifacts(objs) {
         clientObj['_id'] = element['_id'];
         clientObj['set'] = numToStringSets[element['set']];
         clientObj['slot'] = numToStringSlots[element.slot];
-        /*
-        console.log(element.set)
-        console.log(numToStringSets[element.set]);
-        console.log(element.slot)
-        console.log(numToStringSlots[element.slot]);
-        */
         clientObj['name'] = artifactSets[numToStringSets[element.set]][clientObj['slot']];
         clientObj['subOrder'] = decodeSubstatOrder(element.subOrder, true);
-
-        //console.log(clientObj['subOrder']);
 
         clientObj['subOrder'].forEach(stat => {
             clientObj[stat] = element[stringToNumStats[stat]];
         })
+
         clientObj['rarity'] = element.rarity;
         clientObj['level'] = element.level;
         clientObj['requiredCumulativeXP'] = element.requiredCumulativeXP;
@@ -892,7 +885,6 @@ function convertArtifacts(objs) {
 }
 
 function syncResinCount(userCollection, userQuery){
-    console.log("syncResinCount")
     return new Promise(resolve=> {
         userCollection.findOne(userQuery)
             .then(result => {
@@ -905,18 +897,13 @@ function syncResinCount(userCollection, userQuery){
                 }
 
                 if (resincount + (resinInc+1) > 160) {
-                    //console.log("RESINCOUNT EXCEEDED");
                     resinInc = 160 - (resincount+1);
                 }
 
-                //console.log("resinInc: " + resinInc);
-
                 if (resincount > 160) {
-                    console.log("Resin count exceeded 160");
                     userCollection.findOneAndUpdate(userQuery,
                         {
                             $set: {'resin': 160},
-
                         },
                         {returnDocument: "after"}
                     )
@@ -924,7 +911,7 @@ function syncResinCount(userCollection, userQuery){
 
                 userCollection.findOneAndUpdate(userQuery,
                     {
-                        $inc: {'resin': resinInc+1, 'nextResinUpdate': (resinInc+1)*30},
+                        $inc: {'resin': resinInc+1, 'nextResinUpdate': (resinInc + 1) * 30},
                         //$set: {'nextResinUpdate': resinInc*30 + result['nextResinUpdate']},
 
                     },
@@ -991,7 +978,6 @@ function listArtifacts(res, artifactsCollection, doCompress){
             }
         })
         .catch(error => {
-            console.log(error);
             res.send("ERROR")
         });
 }
@@ -1039,15 +1025,6 @@ function rollSingle(domainName, rarity){
 
     var mainstat = weightedRand(main_percentages[randSlot], []);
     var initialMainVal = main_percentages[randSlot][mainstat]['stats'][rarityEnums[rarity]]['0'];
-    
-    /*
-    console.log('-----------------------')
-    console.log('domainName: ' + domainName);
-    console.log('pickedSetName: ' + pickedSetName);
-    console.log('rarity: ' + rarity);
-    console.log('randSlot: ' + randSlot);
-    console.log('-----------------------')
-    */
 
     var initialArtifact = {
         //name: pickedSet[randSlot],
@@ -1064,8 +1041,6 @@ function rollSingle(domainName, rarity){
         levelHistory: {},
     }
 
-    //console.log(JSON.stringify(initialArtifact));
-
     //var numSubs = parseInt(weightedRand({'3': {chance: 0.75}, '4': {chance: 0.25}}, []));
     var numSubs = parseInt(weightedRand(numStats_dist[rarityEnums[rarity]], []));
     var subStats = [];
@@ -1074,10 +1049,6 @@ function rollSingle(domainName, rarity){
         var statRoll = sub_percentages[subStats[i]]['stats'][rarityEnums[rarity]][getRandInt(4)];
         //HP: 123, => 0: 123
         initialArtifact[stringToNumStats[subStats[i]]] = statRoll;
-        /*
-                    initialArtifact['sub'+ i] = subStats[i-1];
-                    initialArtifact['sub'+ i + 'Val'] = statRoll;
-                    */
     }
 
     var subStatOrderEncode = encodeSubstatOrder(subStats, true);
@@ -1087,11 +1058,6 @@ function rollSingle(domainName, rarity){
 }
 
 function rollArtifacts(res, domainName, artifactsCollection, userCollection, userQuery) {
-    console.log('rollArtifacts');
-    console.log(userQuery);
-    console.log('=====')
-    console.log(userCollection);
-    console.log('=====')
     userCollection.findOne(userQuery)
         .then(result =>{
             if(result['resin'] < 5) {
@@ -1131,7 +1097,6 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
 
                 artifactsCollection.insertMany(artifactArr)
                     .then(() => {
-                        console.log(artifactArr);
                         res.status(200).send(artifactArr)
                         //res.end();
                     })
@@ -1141,8 +1106,6 @@ function rollArtifacts(res, domainName, artifactsCollection, userCollection, use
 }
 
 function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
-    //console.log('Level update');
-
     const obj = convertArtifacts([mongoObj])[0];
 
     var numSubs = obj['subOrder'].length;
@@ -1250,8 +1213,6 @@ function levelUpdateArtifact(res, artifactsCollection, artifactID, mongoObj) {
 }
 
 function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId){
-    //console.log("In levelArtifact");
-    //console.log(selected);
     if (selected === undefined || fodderIDArr === undefined || fodderIDArr.length === 0) {
         res.status(400).send("Missing selection");
         return;
@@ -1273,10 +1234,7 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
 
     artifactsCollection.findOne({"_id": artifactID})
         .then(obj => {
-            //console.log(obj);
-            //console.log(obj['level']);
             if(obj['level'] >= obj['rarity']*4) {
-                console.log("Max level");
                 res.status(400).send('Max level reached');
                 return;
             }
@@ -1302,7 +1260,6 @@ function levelArtifact(res, artifactsCollection, selected, fodderIDArr, ObjectId
                             res.status(400).send("Excess fodder, artifacts not consumed");
                             return;
                         }
-                        //console.log(obj['cumulativeXP'] + totalXP)
                     }
 
                     artifactsCollection.findOneAndUpdate(
@@ -1363,9 +1320,6 @@ function deleteArtifact(res, removeList, artifactsCollection, sendResponse=true)
 }
 
 function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
-    console.log("in lockArtifacts")
-    console.log(lockList);
-    console.log(artifactsCollection)
     if (lockList === undefined || lockList.length === 0) {
         res.status(400).send("No selection for lock");
         return;
@@ -1380,7 +1334,6 @@ function lockArtifacts(res, artifactsCollection, lockList, ObjectId) {
         {$set: {"locked": true}},
     )
     .then(result => {
-        console.log(result.modifiedCount + " artifacts locked")
         res.status(200).send(result.modifiedCount + " artifacts locked");
     })
     .catch(error => console.error(error))
