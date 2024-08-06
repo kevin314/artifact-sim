@@ -6,26 +6,19 @@
 
 //const compressionTable = createCompressionTable(artifactSchema);
 
-console.log("hi");
-console.time('bench');
+console.time('start bench');
 fetch('/api/discord/users/@me/artifacts', {
     method: 'get',
     headers: {'Content-Type': 'application/json'},
 })
     .then(res => {
-        console.log("RESPONSE:");
-        console.log(res);
         res.json()
     .then(resArr => {
-        console.log("RESPONSEARR")
-        console.log(resArr);
         let decompArr = [];
         for (let obj in resArr) {
             decompArr.push(decompressObject(compressionTable, obj));
         }
         console.timeEnd('bench');
-        console.log("decompArr:");
-        console.log(decompArr); 
     })
     });
 
@@ -42,14 +35,12 @@ function addButton(obj) {
     document.getElementById('button' + obj._id).onclick = function() {selectCard(artifactArrObj[obj._id])};
 }
 function selectCard(obj){
-    console.log("In SELECTCARD");
-    
     var radio = document.getElementById('radio' + obj._id);
     if(radio.checked === false) {
         radio.checked = true;
         var cardheader = document.getElementById('cardheader');
         cardheader.innerHTML = obj.name;
-        //console.log(`images/artifactSets/${obj['set']}/${obj['slot']}.png`)
+
         document.getElementById('cardimage').src = `images/artifactSets/${obj['set']}/${obj['slot']}.png`
         document.getElementById('cardmain').innerHTML = obj.main;
         document.getElementById('cardmainVal').innerHTML = Math.round(obj.mainVal*10)/10;
@@ -62,15 +53,7 @@ function selectCard(obj){
             var li = document.createElement('li');
             li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
             cardstats.children[0].appendChild(li);
-            /*
-            console.log(li);
-            console.log(li.childNodes);
-            console.log('------------------------------')
-            */
-            //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
         }
-        //statsStr += `</ul>`;
-        //document.getElementById('cardstats').innerHTML = statsStr;
     } 
 }
 function rollArtifact(domainName) {
@@ -135,7 +118,7 @@ function addButtons(resultArr) {
 function levelUpdatePage(obj){
     artifactArrObj[obj._id] = obj;
     const id = obj['_id'];
-    //console.log(id);
+
     const xp = document.getElementById('xp'+id);
     const level = document.getElementById('level'+id);
     const main = document.getElementById('main'+id);
@@ -158,20 +141,13 @@ function levelUpdatePage(obj){
                     var li = document.createElement('li');
                     li.textContent = `${obj.subOrder[i]}: ${Math.round(obj[obj.subOrder[i]]*10)/10}`;
                     cardstats.children[0].appendChild(li);
-                    //console.log(li);
-                    //console.log(li.childNodes);
-                    //console.log('------------------------------')
-                    //statsStr += `<li>${obj.subOrder[i]}+${Math.round(obj[obj.subOrder[i]]*10)/10}<br/></li>`
                 }
     cardmainVal.innerHTML =  main.innerHTML;
-    //cardstats.innerHTML = subsStr;
 }
 
 function countDown(date) {
     const resintimer = document.getElementById('resintimer');
     if (date) {
-        console.log(Math.floor(Date.now()/1000) - parseInt(date));
-        //resintimer.innerHTML = Math.abs((Math.floor(Date.now()/1000) - parseInt(date)));
         resintimer.innerHTML = parseInt(date) - Math.floor(Date.now()/1000);
     } else {
         resintimer.innerHTML = 30;
@@ -194,11 +170,6 @@ function countDown(date) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    /*
-    var li = document.getElementById(`li0`);
-        console.log(li);
-        console.log(li.childNodes);
-        */
     const resindate = document.getElementById('resindate');
     const resintimer = document.getElementById('resintimer');
     const resincount = document.getElementById('resincount');
@@ -253,10 +224,8 @@ window.addEventListener('DOMContentLoaded', () => {
         for(const obj of deletedata){
             fodderartifactIDs.push(obj[1]);
         }
-        console.log(fodderartifactIDs);
 
         var leveldata = new FormData(levelform);
-        //console.log(data);
         var artifactID;
         for(const obj of leveldata){
             artifactID = obj[1];
@@ -276,7 +245,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
                 res.json().then(result => {
                     var obj = convertArtifacts([result])[0];
-                    console.log(obj);
                     levelUpdatePage(obj);
                 })
             })

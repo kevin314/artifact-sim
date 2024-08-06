@@ -16,22 +16,14 @@ import {decompressObject} from 'jsonschema-key-compression';
 
 const compressionTable = createCompressionTable(artifactSchema);
 
-
 const {MongoClient, ObjectId} = mongodb;
-//import {getClient} from '../mongo.mjs';
-//import clientPromise from '../index.mjs';
 
 const router = express.Router();
-
-
-//router.use(bodyParser.urlencoded({ extended: true }));
-//router.use(bodyParser.json());
 
 router.use(express.urlencoded({extended: true}));
 router.use(express.json());
 
-
-//const client = await getClient();
+const url = '';
 
 MongoClient.connect(url, { useUnifiedTopology:
     true })
@@ -42,31 +34,13 @@ MongoClient.connect(url, { useUnifiedTopology:
         const usersdb = client.db('usersdb');
         const discordUsers = usersdb.collection('discord');
 
-        //console.log(guestdb.collection('test'))
-
         function ensureUser (req, res, next, functionCall){
-            console.log("ensureUser");
             const userid  = req.params['userid'];
                     if (req.params.userid == '@me'){
                         functionCall();
-                        /*
-                        if (req.user) {
-                            const user = req.user;
-                            functionCall();
-                        } else {
-                            let cookieid;
-                            if(req.signedCookies['guestCookie'] === undefined){
-                                res.locals.sendEmpty = true;
-                                console.log("Send empty");
-                            } 
-                            functionCall();
-                        }
-                        */
                     } else {
-                        console.log("Unauth")
                         res.send("Unauthorized", 401)
                     }
-            //next();
         }
 
         function getArtifactsCol(provider, id) {
@@ -81,16 +55,11 @@ MongoClient.connect(url, { useUnifiedTopology:
                 }
                 return col;
             } catch {
-                console.log("catch")
-                console.log(id)
-                console.log(provider)
                 return undefined;
             }
         }
 
         function getUserColQuery(provider, id){
-            console.log('getQuery');
-            console.log(id)
             let col;
             let query;
             if (provider === undefined) {
@@ -111,16 +80,12 @@ MongoClient.connect(url, { useUnifiedTopology:
         }
 
         router.get('/test', (req, res) => {
-            console.log('test');
-            res.send('hi');
+            res.send('test');
         });
 
         router.use('/', (req,res,next) => {
-            console.log('called /')
-            //console.log(req.user);
             if(req.user) {
                 //authUser(req.user, res);
-                //console.log(getArtifactsCol(req.user.provider, req.user.id));
                 if (req.user.provider === 'google') {
                     req.currID = req.user.emails[0].value;
                 } else {
@@ -133,37 +98,24 @@ MongoClient.connect(url, { useUnifiedTopology:
                     //authGuest(res, cookieid);
                 } else {
                     res.locals.sendEmpty = true;
-                    console.log("Send empty")
                 }
-                //console.log(getArtifactsCol(undefined, cookieid));
                 req.currID = cookieid;
             }
-            //res.send('bye')
             next();
         })
 
         // Get user's artifacts
         router.get('/users/:userid/artifacts', (req, res, next) => {
-            console.log('GET ARTIFACTS');
-            console.log(req.params);
             if(res.locals.sendEmpty === true){
                 res.send([]);
             }
             next();
         }, function (req,res,next){ensureUser(req, res, next, ()=> {listArtifacts(res, getArtifactsCol(req.user && req.user.provider, req.currID), true)})});
-        //function (req,res,next){ensureUser(req, res, next, ()=> {listArtifacts(res, getArtifactsCol(req.user && req.user.provider, req.currID), null, null)})});
 
         // Roll artifacts for a user
         router.post('/users/:userid/artifacts', async (req, res, next) => {
-            console.log('ROLL');
-            console.log(req.params);
-            //const userid  = req.params['userid'];
-            //const query = {'userID': userid};
             const setName = req.body.domain;
-            console.log(req.body);
-            console.log(setName);
             if(!setName) {
-                console.log("No domain specified");
                 res.status(400).send("No domain specified");
                 return;
             }
@@ -173,7 +125,6 @@ MongoClient.connect(url, { useUnifiedTopology:
                     cookieid = req.signedCookies['guestCookie']['_id'];
                 } 
                 cookieid = await authGuest(res, cookieid, true, false);
-                console.log("Assign currID")
                 req.currID = cookieid;
             }
             //res.locals.setName = setName;
@@ -186,10 +137,6 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         // Level artifact
         router.put('/users/:userid/artifacts/level', (req, res, next) => {
-            console.log('LEVEL');
-            console.log(req.params);
-            //res.locals.fodderList = req.body.fodder;
-            //res.locals.artifactID = req.params['artifactid'];
             if(res.locals.sendEmpty === true){
                 res.send({});
                 return;
@@ -200,20 +147,13 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         router.delete('/users/:userid/artifacts/delete', (req, res, next) => {
-            console.log("DELETE")
-            console.log(req.params);
             if(res.locals.sendEmpty === true){
-                console.log("0 artifacts deleted")
                 res.send('0 artifacts deleted');
                 return;
             }
             var remove = req.body.deleteList;
-            //const idArr = checkAuth(req.user);
-            //const artifactsdb = client.db(req.user.provider);
-            //const artifactsCollection = artifactsdb.collection(idArr[1]);
             var removeIdArr = [];
             
-
             try{
                 remove.forEach(id => {
                     removeIdArr.push(ObjectId(id));
@@ -229,13 +169,9 @@ MongoClient.connect(url, { useUnifiedTopology:
             ensureUser(req, res, next, ()=> {deleteArtifact(res, req.removeIdArr, getArtifactsCol(req.user && req.user.provider, req.currID))})
         });
 
-
         //Lock artifacts
         router.put('/users/:userid/artifacts/lock', (req, res, next) => {
-            console.log('LOCK');
-            console.log(req.params);
             if(res.locals.sendEmpty === true){
-                console.log("0 artifacts locked")
                 res.send('0 artifacts locked');
                 return;
             }
@@ -246,10 +182,7 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         //Unlock artifacts
         router.put('/users/:userid/artifacts/unlock', (req, res, next) => {
-            console.log('UNLOCK');
-            console.log(req.params);
             if(res.locals.sendEmpty === true){
-                console.log("0 artifacts unlocked")
                 res.send('0 artifacts unlocked');
                 return;
             }
@@ -266,10 +199,7 @@ MongoClient.connect(url, { useUnifiedTopology:
         }
         // Get user
         router.get('/users/:userid', (req, res, next) => {
-            console.log('USER');
-            console.log(req.params);
             if(res.locals.sendEmpty === true){
-                console.log("Empty user")
                 res.send({});
                 return;
             }
@@ -279,8 +209,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         });
 
         router.delete('/users/:userid', (req, res, next) => {
-            console.log('DELETE USER');
-            console.log(req.params);
             const userid  = req.params['userid'];
             const query = {'userID': userid};
             discordUsers.deleteOne(query)
@@ -290,22 +218,17 @@ MongoClient.connect(url, { useUnifiedTopology:
         })
 
         router.get('/refresh', (req, res) => {
-            console.log("Refreshing stats...");
             refreshStats(discorddb);
         })
 
         router.post('/users/:userid/artifacts/compare', (req, res) => {
-            console.log("Referencing stats");
-            //console.log(req.params);
             const userid  = req.params['userid'];
             const list = req.body.list;
-            //console.log(list);
             compareStats(res, userid, list, discorddb, ObjectId);
         })
 
         router.get('/auth/google', 
             (req, res, next) => {
-                console.log("auth Google")
                 let uri = req.get('origin')
                 if(uri === undefined) {
                     next();
@@ -319,20 +242,14 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         router.get('/auth/discord', 
             (req, res, next) => {
-                //console.log("auth Discord")
                 let uri = req.get('origin')
-                //console.log(uri)
                 if(uri === undefined) {
                     uri = req.get('referer');
-                    //console.log("referer")
-                    //console.log(uri)
                     if(uri === undefined) {
-                        //console.log("returning")
                         next();
                         return;
                     }
                 }
-                //console.log("signing cookie")
                 res.cookie('discordRedirectURI', {URI: uri}, {signed: true, maxAge: 60000, httpOnly: false, secure: true, sameSite: "None"});
                 next();
             },
@@ -340,8 +257,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         );
 
         router.post('/logout', (req, res) => {
-            //req.logout();
-            //req.session = null;
             req.session.destroy(() => {
                 res.status(200);
             })

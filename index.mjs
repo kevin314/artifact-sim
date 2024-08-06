@@ -35,7 +35,6 @@ const app = express();
 app.set('trust proxy', 1);
 app.all('*', (req, res, next) => {
 	let origin = req.get('origin');
-    //console.log("origin: " + origin)
 	if (!origin) {
 		origin = "*";
 	}
@@ -69,7 +68,6 @@ app.use(session({
 }));
 
 app.use((req, res, next)=>{
-	//console.log(req.headers);
 	req["session"].secure = true;
 	next();
 
@@ -99,16 +97,10 @@ MongoClient.connect(url, { useUnifiedTopology:
         guestUsers = usersdb.collection('guest');
 
         app.get('/test', (req, res) => {
-            console.log('yo');
+            console.log('test');
         })
 
         app.get('/', (req, res) => {
-            /*
-            console.log("in main /")
-            console.log(req.user);
-            console.log(req.signedCookies)
-            */
-            //console.log(req.session);
             if(req.user) {
                 authUser(req.user, res, true);
             } else {
@@ -124,14 +116,8 @@ MongoClient.connect(url, { useUnifiedTopology:
             function(req, res) {
                 if(req.signedCookies['googleRedirectURI']){
                     let uri = req.signedCookies['googleRedirectURI']['URI'];
-                    /*
-                    console.log('---------------')
-                    console.log(uri);
-                    console.log('---------------')
-                    */
                     res.redirect(uri);
                 } else {
-                    console.log("redirect")
                     res.redirect('/');
                 }
             }
@@ -139,16 +125,10 @@ MongoClient.connect(url, { useUnifiedTopology:
 
         app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/' }),
             function(req, res) {
-                console.log("discord callback")
-                console.log(req.signedCookies)
                 if(req.signedCookies['discordRedirectURI']){
                     let uri = req.signedCookies['discordRedirectURI']['URI'];
-                    console.log('---------------')
-                    console.log(uri);
-                    console.log('---------------')
                     res.redirect(uri);
                 } else {
-                    console.log("redirect")
                     res.redirect('/');
                 }
             }
@@ -157,10 +137,9 @@ MongoClient.connect(url, { useUnifiedTopology:
         app.post('/artifacts', async (req, res) => {
             const idArr = await checkAuth(req, res, true);
             const artifactsdb = client.db(idArr[0]);
-            console.log(idArr)
             const userCollection = usersdb.collection(idArr[0]);
-
             const artifactsCollection = artifactsdb.collection(idArr[2]);
+
             (async ()=> {
                 await syncResinCount(userCollection, idArr[1])
                 rollArtifacts(res, req.body.domain, artifactsCollection, userCollection, idArr[1]);
@@ -194,8 +173,6 @@ MongoClient.connect(url, { useUnifiedTopology:
         })
 
         app.post('/logout', (req, res) => {
-            //req.logout();
-            //req.session = null;
             req.session.destroy(() => {
                 res.redirect('/');
             })
@@ -227,7 +204,6 @@ async function checkAuth(req, res, createGuest=false) {
             //cookieid = req.signedCookies['guestCookie']['_id'];
         } else {
             res.locals.sendEmpty = true;
-            console.log("Send empty")
         }
         var mongocookieid;
         try {
@@ -240,11 +216,7 @@ async function checkAuth(req, res, createGuest=false) {
     }
 }
 
-function renderArtifacts(provider){
-}
-
 function authUser(user, res, isRender=false) {
-    console.log("authUser")
     if(user.provider === 'discord') {
         const userid = user.id;
         const artifactsCollection = discorddb.collection(userid);
@@ -262,7 +234,6 @@ function authUser(user, res, isRender=false) {
                             'nextResinUpdate': -1,
                         }
                     )
-                    console.log("RESULT NULL")
                     
                     if(isRender===true){
                         artifactsCollection.find().sort({$natural:-1}).toArray()
@@ -291,19 +262,10 @@ function authUser(user, res, isRender=false) {
                                     results.forEach(elem => {
                                         compressedArr.push(compressObject(compressionTable, elem));
                                     })
-                                    console.log('Compressed Arr');
-                                    console.log(compressedArr);
-                                    console.log(compressedArr[0]['|c']);
-                                    console.log('===========================');
-
                                     var decompressedArr = []
                                     compressedArr.forEach(elem => {
                                         decompressedArr.push(decompressObject(compressionTable, elem));
                                     })
-                                    console.log('Decompressed Arr');
-                                    console.log(decompressedArr);
-                                    console.log(decompressedArr[0]['levelHistory']);
-                                    console.log('===========================');
                                     */
 
                                     res.render('index', { artifacts: artifactsArr, username: user.username,
@@ -346,11 +308,6 @@ function authUser(user, res, isRender=false) {
                             resinDate = userObj['nextResinUpdate'];
                             artifactsCollection.find().sort({$natural:-1}).toArray()
                                 .then(results => {
-                                    /*
-                                    console.log("RENDERING VIEW");
-                                    console.log("RESIN: " + resin);
-                                    console.log("RESINDATE: " +  resinDate);
-                                    */
                                     var artifactsArr = convertArtifacts(results);
                                     res.render('index', { artifacts: artifactsArr, username: user.name.givenName,
                                         resin: resin, resinDate: resinDate, loggedIn: true})
@@ -365,17 +322,12 @@ function authUser(user, res, isRender=false) {
 
 async function authGuest(res, cookieid, createGuest=false, isRender=false) {
     return await new Promise((resolve, reject) => {
-        //console.log("authGuest")
         var userid = cookieid;
         try {
-            //console.log('1')
-            userid = ObjectId(userid);
-            guestUsers.findOne({'_id': userid})
+                userid = ObjectId(userid);
+                guestUsers.findOne({'_id': userid})
             .then(result => {
-                //console.log('1a')
                 if(result == null) {
-                    //console.log('2');
-                    //console.log("No guest user with associated cookie")
                     if(createGuest === true){
                         insertGuest(resolve, res);
                     }
@@ -397,12 +349,11 @@ async function authGuest(res, cookieid, createGuest=false, isRender=false) {
                         }
                     }
                 } else {
-                    //console.log('3');
                     (async ()=> {
                         var userObj = await syncResinCount(guestUsers, {'_id': userid})
                         resolve(userid.toString());
-                        console.log("Resolved cookie")
-                        if(isRender===true){
+
+                        if(isRender === true){
                             var resin = userObj['resin'];
                             var resinDate = userObj['nextResinUpdate'];
                             const artifactsCollection = guestdb.collection(userid.toString());
@@ -418,7 +369,6 @@ async function authGuest(res, cookieid, createGuest=false, isRender=false) {
                 }
             });
         } catch (error) {
-            console.log("No usable userid cookie")
             insertGuest(res);
             if(isRender === true){
                 const artifactsCollection = guestdb.collection(userid.toString());
@@ -443,10 +393,7 @@ function insertGuest(resolve, res) {
     ).then(result => {
         const id = result.insertedId.toString();
         signCookie(res, id);
-        console.log('signed')
         resolve(id);
-        console.log("Resolved cookie")
-        //const artifactsCollection = guestdb.collection(id);
     })
 }
 

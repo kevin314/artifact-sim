@@ -259,7 +259,6 @@ sub_percentages = {
         }
     },
 }
-console.log("hi");
 
 function getRandInt(max){
     return Math.floor(Math.random() * max);
@@ -303,8 +302,6 @@ function rollArtifact(setName) {
         mainVal: initialMainVal,
     }
 
-    console.log(initialArtifact);
-
     numSubs = parseInt(weightedRand({'3': {chance: 0.75}, '4': {chance: 0.25}}, []));
     subStats = [];
     for(var i = 1; i <= numSubs; i++){
@@ -328,7 +325,6 @@ function rollArtifact(setName) {
 window.addEventListener('DOMContentLoaded', () => {
     const hidden_palace = document.getElementById('roll-hidden_palace')
     hidden_palace.addEventListener('click', () => {
-        console.log("HP click");
         randNum = getRandInt(2);
         setName = "";
         if(randNum == 0){
@@ -342,7 +338,6 @@ window.addEventListener('DOMContentLoaded', () => {
     })
     const vindagnyr  = document.getElementById('roll-vindagnyr')
     vindagnyr.addEventListener('click', () => {
-        console.log("VIN click");
         randNum = getRandInt(2);
         setName = "";
         if(randNum == 0){
